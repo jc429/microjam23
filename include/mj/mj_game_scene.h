@@ -1,14 +1,15 @@
 #ifndef MJ_GAME_SCENE_H
 #define MJ_GAME_SCENE_H
 
-#include "bn_regular_bg_ptr.h"
-#include "bn_unique_ptr.h"
-
-#include "mj_game.h"
 #include "mj_pause.h"
 #include "mj_scene.h"
+#include "mj_game_lives.h"
+#include "mj_game_backdrop.h"
+#include "mj_game_manager.h"
+#include "mj_game_result_animation.h"
 #include "mj_game_timer.h"
 #include "mj_game_title.h"
+#include "mj_next_game_transition.h"
 
 namespace mj
 {
@@ -27,27 +28,34 @@ public:
 
 private:
     core& _core;
-    bn::unique_ptr<game> _game;
     game_data _data;
     pause _pause;
+    game_backdrop _backdrop;
     game_title _title;
     game_timer _timer;
+    game_lives _lives;
+    bn::optional<game_manager> _game_manager;
     bn::optional<bn::regular_bg_ptr> _big_pumpkin;
-    bn::vector<bn::sprite_ptr, 16> _info_sprites;
-    int _lives = 4;
+    bn::unique_ptr<game_result_animation> _result_animation;
+    bn::optional<next_game_transition> _next_game_transition;
+    bn::fixed _music_volume_dec;
+    bn::fixed _dmg_music_left_volume_dec;
+    bn::fixed _dmg_music_right_volume_dec;
     int _completed_games = 0;
     int _pending_frames = 0;
+    int _total_frames = 1;
     int _big_pumpkin_stage = 0;
     int _big_pumpkin_counter = 0;
     int _exit_frames = 0;
     bool _playing = false;
+    bool _victory = false;
     bool _big_pumpkin_inc = true;
-
-    void _print_info();
 
     void _update_play();
 
     [[nodiscard]] bool _update_fade();
+
+    void _update_volume_dec();
 };
 
 }

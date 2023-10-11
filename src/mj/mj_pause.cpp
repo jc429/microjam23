@@ -1,12 +1,16 @@
 #include "mj/mj_pause.h"
 
 #include "bn_bg_palettes.h"
+#include "bn_dmg_music.h"
 #include "bn_keypad.h"
+#include "bn_music.h"
+#include "bn_sound.h"
 #include "bn_sprite_builder.h"
 #include "bn_sprite_palettes.h"
 
 #include "mj/mj_core.h"
 
+#include "bn_sound_items.h"
 #include "bn_sprite_items_mj_font.h"
 #include "bn_sprite_tiles_items_mj_pause_dialog.h"
 #include "bn_sprite_tiles_items_mj_pause_dialog_lateral.h"
@@ -82,26 +86,51 @@ pause::~pause()
 {
     bn::bg_palettes::set_grayscale_intensity(0);
     bn::sprite_palettes::set_grayscale_intensity(0);
+
+    if(bn::music::playing())
+    {
+        bn::music::stop();
+    }
+
+    if(bn::dmg_music::playing())
+    {
+        bn::dmg_music::stop();
+    }
+
+    bn::sound::set_master_volume(1);
 }
 
 bool pause::update(bool& exit)
 {
     exit = false;
 
-    bool old_paused = _sprites[0].visible();
+    bool old_paused = paused();
     bool new_paused = old_paused;
 
-    if(_back_to_game_delay)
+    if(_back_to_game_delay_frames)
     {
-        _back_to_game_delay = false;
-        new_paused = false;
+        --_back_to_game_delay_frames;
+
+        if(! _back_to_game_delay_frames)
+        {
+            new_paused = false;
+        }
     }
     else
     {
+        bool back_to_game = false;
+
         if(bn::keypad::start_pressed())
         {
-            _exit_selected = false;
-            new_paused = ! new_paused;
+            if(old_paused)
+            {
+                back_to_game = true;
+            }
+            else
+            {
+                _exit_selected = false;
+                new_paused = true;
+            }
         }
 
         if(old_paused && new_paused)
@@ -111,26 +140,69 @@ bool pause::update(bool& exit)
                 if(_exit_selected)
                 {
                     exit = true;
+                    bn::sound_items::mj_pause_exit.play();
                 }
                 else
                 {
-                    _back_to_game_delay = true;
+                    back_to_game = true;
                 }
             }
             else if(bn::keypad::b_pressed())
             {
-                _back_to_game_delay = true;
+                back_to_game = true;
             }
             else if(bn::keypad::left_pressed() || bn::keypad::right_pressed())
             {
                 _exit_selected = ! _exit_selected;
+                bn::sound_items::mj_pause_cursor.play();
             }
+        }
+
+        if(back_to_game)
+        {
+            _back_to_game_delay_frames = 14;
+            bn::sound_items::mj_pause_end.play();
         }
     }
 
     if(old_paused != new_paused)
     {
-        bn::fixed grayscale_intensity = new_paused ? 1 : 0;
+        bn::fixed grayscale_intensity;
+
+        if(new_paused)
+        {
+            grayscale_intensity = 1;
+
+            if(bn::music::playing() && ! bn::music::paused())
+            {
+                bn::music::pause();
+            }
+
+            if(bn::dmg_music::playing() && ! bn::dmg_music::paused())
+            {
+                bn::dmg_music::pause();
+            }
+
+            _sound_master_volume = bn::sound::master_volume();
+            bn::sound::stop_all();
+            bn::sound::set_master_volume(1);
+            bn::sound_items::mj_pause_begin.play();
+        }
+        else
+        {
+            if(bn::music::paused())
+            {
+                bn::music::resume();
+            }
+
+            if(bn::dmg_music::paused())
+            {
+                bn::dmg_music::resume();
+            }
+
+            bn::sound::set_master_volume(_sound_master_volume);
+        }
+
         bn::bg_palettes::set_grayscale_intensity(grayscale_intensity);
         bn::sprite_palettes::set_grayscale_intensity(grayscale_intensity);
 
