@@ -10,7 +10,6 @@
 namespace bhv
 {
 	
-
 	class bhv_game : public mj::game
 	{
 		enum button_mapping

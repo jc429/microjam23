@@ -16,7 +16,11 @@
 
 MJ_GAME_LIST_ADD(bhv::bhv_game)
 
-#define DEBUG_BUTTONS true
+namespace
+{
+	constexpr bn::string_view code_credits[] = {"squishyfrogs"};
+	constexpr bn::string_view graphics_credits[] = {"moaw"};
+}
 
 namespace bhv
 {
