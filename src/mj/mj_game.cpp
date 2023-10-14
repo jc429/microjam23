@@ -17,21 +17,26 @@ int game::recommended_total_frames(int base_total_frames, int completed_games, c
     return total_frames;
 }
 
+difficulty_level game::recommended_difficulty_level(int completed_games, [[maybe_unused]] const game_data& data)
+{
+    return difficulty_level(bn::clamp(completed_games / 9, 0, 2));
+}
+
 bn::fixed game::recommended_music_tempo(int completed_games, [[maybe_unused]] const game_data& data)
 {
     constexpr bn::fixed minimum_tempo = 1.15;
     constexpr bn::fixed maximum_tempo = 1.85;
     constexpr bn::fixed tempo_diff = maximum_tempo - minimum_tempo;
-    constexpr int minimum_games = 0;
-    constexpr int maximum_games = 45;
+    constexpr int minimum_waves = 0;
+    constexpr int maximum_waves = 45 / games_per_speed_inc;
 
-    completed_games = bn::clamp(completed_games, minimum_games, maximum_games);
-    return minimum_tempo + ((completed_games * tempo_diff) / maximum_games);
+    int completed_waves = bn::clamp(completed_games / games_per_speed_inc, minimum_waves, maximum_waves);
+    return minimum_tempo + ((completed_waves * tempo_diff) / maximum_waves);
 }
 
 void game::play_music(bn::music_item music_item, int completed_games, const game_data& data)
 {
-    bn::music::play(music_item, 1, false);
+    bn::music::play(music_item, 0.5, false);
     bn::music::set_tempo(recommended_music_tempo(completed_games, data));
 }
 

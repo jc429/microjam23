@@ -7,7 +7,9 @@ namespace mj
 {
     enum class scene_type : uint8_t
     {
+        TITLE,
         GAME,
+        CREDITS,
     };
 }
 
