@@ -9,7 +9,9 @@
 
 namespace bhv
 {
-	
+#define __PATTERN_LEN_MAX__ 8
+#define __PUMPPY_COUNT__ 4
+
 	class bhv_game : public mj::game
 	{
 		enum button_mapping
@@ -22,6 +24,12 @@ namespace bhv
 			DOWN = 5,
 			LEFT = 6,
 			RIGHT = 7
+		};
+
+		enum game_phase
+		{
+			TEACHING,
+			RECITING
 		};
 
 	public:
@@ -50,15 +58,20 @@ namespace bhv
 
 	private:
 		bn::regular_bg_ptr _bg;
-		bn::vector<bn::sprite_ptr, 24> _sprites;
+		bn::vector<bn::sprite_ptr, __PATTERN_LEN_MAX__> _btn_sprites;
+		bn::vector<bn::sprite_ptr, __PUMPPY_COUNT__> _pup_sprites;
 		int _total_frames;
 		int _show_result_frames = 60;
 		bool _victory = false;
 		bool _defeat = false;
 
+		game_phase _game_phase;
 		int _item_count;
-		bn::vector<int, 24> _pattern_items;
+		bn::vector<int, __PATTERN_LEN_MAX__> _pattern_items;
 		int _pattern_index;
+		int _player_index;
+		int _frames_per_reveal;
+
 
 		void init(const mj::game_data &data);
 		void clear();
@@ -67,6 +80,9 @@ namespace bhv
 
 		void win();
 		void lose();
+
+		void reveal_button();
+
 	};
 
 }

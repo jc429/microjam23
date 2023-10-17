@@ -8,24 +8,33 @@
 
 #include "mj/mj_game_list.h"
 
-#include "bn_regular_bg_items_tmg_press_a.h"
+#include "bn_regular_bg_items_bhv_bg.h"
 #include "bn_regular_bg_items_tmg_you_lose.h"
 #include "bn_regular_bg_items_tmg_you_win.h"
 
 #include "bn_sprite_items_bhv_button_icons.h"
+#include "bn_sprite_items_bhv_pumppy.h"
 
 MJ_GAME_LIST_ADD(bhv::bhv_game)
 
 namespace
 {
 	constexpr bn::string_view code_credits[] = {"squishyfrogs"};
-	constexpr bn::string_view graphics_credits[] = {"moaw"};
+	constexpr bn::string_view graphics_credits[] = {"moawling"};
 }
+
+MJ_GAME_LIST_ADD_CODE_CREDITS(code_credits)
+MJ_GAME_LIST_ADD_GRAPHICS_CREDITS(graphics_credits)
+// MJ_GAME_LIST_ADD_MUSIC_CREDITS(music_credits)
+// MJ_GAME_LIST_ADD_SFX_CREDITS(sfx_credits)
 
 namespace bhv
 {
 
-	bhv_game::bhv_game(int completed_games, const mj::game_data &data) : _bg(bn::regular_bg_items::tmg_press_a.create_bg((256 - 240) / 2, (256 - 160) / 2))
+	bhv_game::bhv_game(int completed_games, const mj::game_data &data) : 
+		_bg(bn::regular_bg_items::bhv_bg.create_bg((256 - 240) / 2, (256 - 160) / 2)),
+		// TODO: Select final bgm CONTENDERS: TOTSNUK10, TOTSNUK01,
+		_total_frames(play_jingle(mj::game_jingle_type::TOTSNUK10, completed_games, data)) 
 	{
 		constexpr int frames_diff = maximum_frames - minimum_frames;
 		constexpr int maximum_speed_completed_games = 30;
@@ -37,7 +46,10 @@ namespace bhv
 		_total_frames -= data.random.get_int(60);
 		_total_frames = bn::clamp(_total_frames, minimum_frames, maximum_frames);
 
+		_frames_per_reveal = _total_frames / 10; //TODO: fix this to match bpm
+
 		init(data);
+		_game_phase = TEACHING;
 	}
 
 	void bhv_game::fade_in([[maybe_unused]] const mj::game_data &data)
@@ -51,6 +63,11 @@ namespace bhv
 
 		if (!_victory && !_defeat)
 		{
+
+			if (data.pending_frames + (_frames_per_reveal * (1+_pattern_index)) == _total_frames)
+			{
+				reveal_button();
+			}
 
 			if (bn::keypad::any_pressed() && !bn::keypad::start_pressed() && !bn::keypad::select_pressed())
 			{
@@ -91,9 +108,11 @@ namespace bhv
 	{
 		clear();
 		// TODO: prefer longer patterns the more minigames have been cleared?
-		_item_count = 3 + data.random.get_int(6);
+		_item_count = 3 + data.random.get_int(5);
 		_pattern_index = 0;
+		_player_index = 0;
 
+		// BUILD BUTTON SPRITES
 		{
 			// init sprite builder
 			bn::sprite_builder builder(bn::sprite_items::bhv_button_icons);
@@ -114,28 +133,49 @@ namespace bhv
 
 				// sprite setup
 				builder.set_position(bn::fixed_point(btn_offset.x() + (i * btn_spacing), btn_offset.y()));
-				_sprites.push_back(builder.build());
+				_btn_sprites.push_back(builder.build());
 				int btn_spr = button*2;
-				_sprites.back().set_tiles(sheet_tiles.create_tiles(btn_spr));
+				_btn_sprites.back().set_tiles(sheet_tiles.create_tiles(btn_spr));
+				_btn_sprites.back().set_visible(false);
 			}
+		}
 
+		// BUILD PUMPPY SPRITES
+		{
+			bn::sprite_builder builder(bn::sprite_items::bhv_pumppy);
+			builder.set_bg_priority(1);
+			builder.set_z_order(1);
+
+			bn::fixed_point pup_points[__PUMPPY_COUNT__]{
+				{-80, 20},
+				{-30, 40},
+				{30, 40},
+				{80, 20}
+			};
+
+			for (int i = 0; i < __PUMPPY_COUNT__; i++)
+			{
+				// sprite setup
+				builder.set_position(pup_points[i]);
+				_pup_sprites.push_back(builder.build());
+			}
 		}
 	}
 
 	void bhv_game::clear()
 	{
-		_sprites.clear();
+		_btn_sprites.clear();
 		_pattern_items.clear();
 	}
 
 	bool bhv_game::check_pattern()
 	{
-		if (_pattern_index >= _pattern_items.size())
+		if (_player_index >= _pattern_items.size())
 		{
 			return false;
 		}
 
-		switch (_pattern_items[_pattern_index])
+		switch (_pattern_items[_player_index])
 		{
 		case button_mapping::A:
 			return bn::keypad::a_pressed();
@@ -172,11 +212,11 @@ namespace bhv
 	{
 		{
 			bn::sprite_tiles_item sheet_tiles = bn::sprite_items::bhv_button_icons.tiles_item();
-			int btn_spr = (_pattern_items[_pattern_index] * 2) + 1;
-			_sprites[_pattern_index].set_tiles(sheet_tiles.create_tiles(btn_spr));
+			int btn_spr = (_pattern_items[_player_index] * 2) + 1;
+			_btn_sprites[_player_index].set_tiles(sheet_tiles.create_tiles(btn_spr));
 		}
-		_pattern_index++;
-		if (_pattern_index >= _pattern_items.size())
+		_player_index++;
+		if (_player_index >= _pattern_items.size())
 		{
 			win();
 		}
@@ -194,5 +234,15 @@ namespace bhv
 		_bg.set_item(bn::regular_bg_items::tmg_you_lose);
 		// result.remove_title = true;
 		_defeat = true;
+	}
+
+	void bhv_game::reveal_button()
+	{
+		if(_pattern_index >= _btn_sprites.size())
+		{
+			return;
+		}
+		_btn_sprites[_pattern_index].set_visible(true);
+		_pattern_index++;
 	}
 }
