@@ -1,6 +1,7 @@
 #ifndef BHV_GAME_H
 #define BHV_GAME_H
 
+#include "bn_fixed_point.h"
 #include "bn_regular_bg_ptr.h"
 #include "bn_sprite_ptr.h"
 #include "bn_vector.h"
@@ -60,6 +61,8 @@ namespace bhv
 		bn::regular_bg_ptr _bg;
 		bn::vector<bn::sprite_ptr, __PATTERN_LEN_MAX__> _btn_sprites;
 		bn::vector<bn::sprite_ptr, __PUMPPY_COUNT__> _pup_sprites;
+		bn::vector<bn::sprite_ptr, 3> _conductor_sprites;
+		bn::fixed_point _conductor_sprite_pos[3];
 		int _total_frames;
 		int _show_result_frames = 60;
 		bool _victory = false;
