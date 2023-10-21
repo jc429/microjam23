@@ -40,17 +40,17 @@ void game::play_music(bn::music_item music_item, int completed_games, const game
     bn::music::set_tempo(recommended_music_tempo(completed_games, data));
 }
 
+void game::play_sound(bn::sound_item sound_item, int completed_games, const game_data& data)
+{
+    sound_item.play(1, recommended_music_tempo(completed_games, data), 0);
+}
+
 int game::play_jingle(game_jingle_type jingle, int completed_games, const game_data& data)
 {
     bn::fixed base_seconds = 8;
 
     switch(jingle)
     {
-
-    case game_jingle_type::METRONOME_8BEAT:
-        play_music(bn::music_items::mj_metronome_8beat, completed_games, data);
-        base_seconds = 4;
-        break;
 
     case game_jingle_type::METRONOME_12BEAT:
         play_music(bn::music_items::mj_metronome_12beat, completed_games, data);
