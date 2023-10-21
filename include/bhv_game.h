@@ -2,7 +2,9 @@
 #define BHV_GAME_H
 
 #include "bn_fixed_point.h"
+#include "bn_optional.h"
 #include "bn_regular_bg_ptr.h"
+#include "bn_sound_item.h"
 #include "bn_sprite_ptr.h"
 #include "bn_vector.h"
 
@@ -38,7 +40,7 @@ namespace bhv
 
 		[[nodiscard]] bn::string<16> title() const final
 		{
-			return "TEST TITLE!";
+			return "SING!";
 		}
 
 		[[nodiscard]] int total_frames() const final
@@ -79,10 +81,11 @@ namespace bhv
 		int _player_index;
 		int _frames_per_reveal;
 
-
 		void init(const mj::game_data &data);
 		void clear();
-		bool check_pattern();
+		int get_pressed_button();
+		bool check_pattern(int btn);
+		bn::optional<bn::sound_item> get_tone(int btn);
 		void advance_index();
 
 		void win();
@@ -92,6 +95,7 @@ namespace bhv
 		void reveal_button();
 		void recite_button();
 		void set_phase(bhv_game_phase phase);
+
 	};
 
 }
