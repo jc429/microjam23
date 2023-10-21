@@ -52,7 +52,7 @@ namespace bhv
 		_frames_per_reveal = _total_frames / 10; //TODO: fix this to match bpm
 
 		init(data);
-		_game_phase = TEACHING;
+		_game_phase = BHV_PHASE_TEACHING;
 	}
 
 	void bhv_game::fade_in([[maybe_unused]] const mj::game_data &data)
@@ -63,13 +63,15 @@ namespace bhv
 	{
 		mj::game_result result;
 		result.exit = data.pending_frames == 0;
+		int frames_elapsed = _total_frames - data.pending_frames;
 
 		if (!_victory && !_defeat)
 		{
 
-			if (data.pending_frames + (_frames_per_reveal * (1+_pattern_index)) == _total_frames)
+			// if (data.pending_frames + (_frames_per_reveal * (1+_pattern_index)) == _total_frames)
+			if (frames_elapsed > 0 && (frames_elapsed % _frames_per_reveal == 0))
 			{
-				reveal_button();
+				game_tick();
 			}
 
 			if (bn::keypad::any_pressed() && !bn::keypad::start_pressed() && !bn::keypad::select_pressed())
@@ -89,7 +91,7 @@ namespace bhv
 
 			// update conductor sprite pos
 			{
-				int frames_elapsed = _total_frames - data.pending_frames;
+				
 				bn::fixed y_float = (3.5 * bn::sin(0.005*frames_elapsed));
 				for (int i = 0; i < _conductor_sprites.size(); i++)
 				{
@@ -161,17 +163,15 @@ namespace bhv
 			builder.set_bg_priority(1);
 			builder.set_z_order(20);
 
-			bn::fixed_point pup_points[__PUMPPY_COUNT__]{
-				{-80, 20},
-				{-30, 40},
-				{30, 40},
-				{80, 20}
-			};
+			_pup_spr_pos[0] = {-80, 20};
+			_pup_spr_pos[1] = {-30, 40};
+			_pup_spr_pos[2] = {30, 40};
+			_pup_spr_pos[3] = {80, 20};
 
 			for (int i = 0; i < __PUMPPY_COUNT__; i++)
 			{
 				// sprite setup
-				builder.set_position(pup_points[i]);
+				builder.set_position(_pup_spr_pos[i]);
 				_pup_sprites.push_back(builder.build());
 			}
 		}
@@ -280,6 +280,23 @@ namespace bhv
 		_defeat = true;
 	}
 
+	void bhv_game::game_tick()
+	{
+		switch (_game_phase)
+		{
+		case BHV_PHASE_TEACHING:
+			reveal_button();
+			break;
+		case BHV_PHASE_RECITING:
+			recite_button();
+			break;
+		
+		default:
+			break;
+		}
+		
+	}
+
 	void bhv_game::reveal_button()
 	{
 		if(_pattern_index >= _btn_sprites.size())
@@ -288,5 +305,34 @@ namespace bhv
 		}
 		_btn_sprites[_pattern_index].set_visible(true);
 		_pattern_index++;
+		if(_pattern_index == _btn_sprites.size())
+		{
+			set_phase(BHV_PHASE_RECITING);
+		}
+	}
+
+	void bhv_game::recite_button()
+	{
+		if (_pattern_index >= __PUMPPY_COUNT__)
+		{
+			return;
+		}
+
+		bn::fixed_point pos = _pup_spr_pos[_pattern_index];
+		pos.set_y(pos.y() - 10); // TODO: TEMP
+		_pup_sprites[_pattern_index].set_position(pos);
+
+		_pattern_index++;
+		if (_pattern_index == _btn_sprites.size())
+		{
+			// RESULTS
+		}
+
+	}
+
+	void bhv_game::set_phase(bhv_game_phase phase)
+	{
+		_game_phase = phase;
+		_pattern_index = 0;
 	}
 }

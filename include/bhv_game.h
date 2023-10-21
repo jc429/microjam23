@@ -27,10 +27,10 @@ namespace bhv
 			RIGHT = 7
 		};
 
-		enum game_phase
+		enum bhv_game_phase
 		{
-			TEACHING,
-			RECITING
+			BHV_PHASE_TEACHING,
+			BHV_PHASE_RECITING
 		};
 
 	public:
@@ -60,15 +60,19 @@ namespace bhv
 	private:
 		bn::regular_bg_ptr _bg;
 		bn::vector<bn::sprite_ptr, __PATTERN_LEN_MAX__> _btn_sprites;
+
 		bn::vector<bn::sprite_ptr, __PUMPPY_COUNT__> _pup_sprites;
+		bn::fixed_point _pup_spr_pos[__PUMPPY_COUNT__];
+
 		bn::vector<bn::sprite_ptr, 3> _conductor_sprites;
 		bn::fixed_point _conductor_sprite_pos[3];
+		
 		int _total_frames;
 		int _show_result_frames = 60;
 		bool _victory = false;
 		bool _defeat = false;
 
-		game_phase _game_phase;
+		bhv_game_phase _game_phase;
 		int _item_count;
 		bn::vector<int, __PATTERN_LEN_MAX__> _pattern_items;
 		int _pattern_index;
@@ -84,8 +88,10 @@ namespace bhv
 		void win();
 		void lose();
 
+		void game_tick();
 		void reveal_button();
-
+		void recite_button();
+		void set_phase(bhv_game_phase phase);
 	};
 
 }
