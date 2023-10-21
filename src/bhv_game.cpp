@@ -22,6 +22,8 @@
 
 MJ_GAME_LIST_ADD(bhv::bhv_game)
 
+void play_tone(int btn);
+
 namespace
 {
 	constexpr bn::string_view code_credits[] = {"squishyfrogs"};
@@ -137,6 +139,7 @@ namespace bhv
 				// sprite setup
 				builder.set_position(puppy_pos_5[i]);
 				_pup_sprites.push_back(builder.build());
+				_pup_sprites.back().set_horizontal_flip(i < 3);
 			}
 		}
 
@@ -185,10 +188,16 @@ namespace bhv
 
 			if (frames_elapsed > 0 && (frames_elapsed % _frames_per_reveal == 0) && (_game_phase == BHV_PHASE_TEACHING))
 			{
-				// game_tick();
-				reveal_button();
+				if (_pattern_index == _btn_sprites.size())
+				{
+					set_phase(BHV_PHASE_RECITING);
+				}
+				else{
+					reveal_button();
+				}
 			}
 
+			//keep prompt around for a bit
 			if (_game_phase == BHV_PHASE_RECITING && _show_prompt_frames > 0)
 			{
 				_show_prompt_frames--;
@@ -212,19 +221,10 @@ namespace bhv
 				int btn = get_pressed_button();
 				if(btn >= 0)
 				{
-					play_tone(btn);
+					recite_button(btn);
 				}
 
-				bool success = check_pattern(_pattern_items[_player_index]);
-
-				if (success)
-				{
-					advance_index();
-				}
-				else
-				{
-					end_game(false);
-				}
+				
 			}
 
 			// update conductor sprite pos
@@ -337,53 +337,13 @@ namespace bhv
 		}
 	}
 
-	void bhv_game::play_tone(int btn)
+	void play_tone(int btn)
 	{
-		bn::optional<bn::sound_item> tone = get_tone(btn);
-		if (tone.get() != NULL)
+		if (btn < 0 || btn >= 8)
 		{
-			tone.get()->play();
+			return;
 		}
-	}
-
-	bn::optional<bn::sound_item> bhv_game::get_tone(int btn)
-	{
-		if(btn < 0 || btn >= 8)
-		{
-			return bn::nullopt;
-		}
-		return btn_tones[btn];
-	}
-
-	void bhv_game::advance_index()
-	{
-		{
-			bn::sprite_tiles_item sheet_tiles = bn::sprite_items::bhv_button_icons.tiles_item();
-			int btn_spr = (_pattern_items[_player_index] * 2) + 1;
-			_btn_sprites[_player_index].set_tiles(sheet_tiles.create_tiles(btn_spr));
-		}
-		_player_index++;
-		if (_player_index >= _pattern_items.size())
-		{
-			end_game(true);
-		}
-	}
-
-	void bhv_game::game_tick()
-	{
-		switch (_game_phase)
-		{
-		case BHV_PHASE_TEACHING:
-			reveal_button();
-			break;
-		case BHV_PHASE_RECITING:
-			recite_button();
-			break;
-		
-		default:
-			break;
-		}
-		
+		btn_tones[btn].play();
 	}
 
 	void bhv_game::reveal_button()
@@ -397,10 +357,7 @@ namespace bhv
 		play_tone(_pattern_items[_pattern_index]);
 
 		_pattern_index++;
-		if(_pattern_index == _btn_sprites.size())
-		{
-			set_phase(BHV_PHASE_RECITING);
-		}
+		
 	}
 
 	void bhv_game::reveal_all_buttons()
@@ -419,26 +376,39 @@ namespace bhv
 		}
 	}
 
-	void bhv_game::recite_button()
+	void bhv_game::recite_button(int btn)
 	{
-		if (_pattern_index >= __NOTE_COUNT_MAX__)
-		{
-			return;
-		}
+		bool success = check_pattern(_pattern_items[_player_index]);
 
-		bn::fixed_point pos = puppy_pos_4[_pattern_index];
+		bn::fixed_point pos = puppy_pos_5[_player_index];
 		pos.set_y(pos.y() - 10); // TODO: TEMP
-		_pup_sprites[_pattern_index].set_position(pos);
+		_pup_sprites[_player_index].set_position(pos);
 
-		play_tone(_pattern_items[_pattern_index]);
+		play_tone(btn);
 
-		_pattern_index++;
-		if (_pattern_index == _btn_sprites.size())
+		if (success)
 		{
-			// RESULTS
-			set_phase(BHV_PHASE_RESULTS);
+			advance_player_index();
 		}
+		else
+		{
+			end_game(false);
+		}
+		
+	}
 
+	void bhv_game::advance_player_index()
+	{
+		{
+			bn::sprite_tiles_item sheet_tiles = bn::sprite_items::bhv_button_icons.tiles_item();
+			int btn_spr = (_pattern_items[_player_index] * 2) + 1;
+			_btn_sprites[_player_index].set_tiles(sheet_tiles.create_tiles(btn_spr));
+		}
+		_player_index++;
+		if (_player_index >= _pattern_items.size())
+		{
+			end_game(true);
+		}
 	}
 
 	void bhv_game::set_phase(bhv_game_phase phase)

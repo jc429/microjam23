@@ -2,7 +2,6 @@
 #define BHV_GAME_H
 
 #include "bn_fixed_point.h"
-#include "bn_optional.h"
 #include "bn_regular_bg_ptr.h"
 #include "bn_sound_item.h"
 #include "bn_sprite_ptr.h"
@@ -84,15 +83,12 @@ namespace bhv
 		bool any_pressed_not_start_select();
 		int get_pressed_button();
 		bool check_pattern(int btn);
-		void play_tone(int btn);
-		bn::optional<bn::sound_item> get_tone(int btn);
-		void advance_index();
-
-		void game_tick();
+		
 		void reveal_button();
 		void reveal_all_buttons();
 		void hide_prompt();
-		void recite_button();
+		void recite_button(int btn);
+		void advance_player_index();
 		void set_phase(bhv_game_phase phase);
 
 	};
