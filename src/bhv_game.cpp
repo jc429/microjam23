@@ -23,11 +23,17 @@
 MJ_GAME_LIST_ADD(bhv::bhv_game)
 
 void play_tone(int btn);
+bn::fixed_point get_puppy_pos(int pup_idx, int pup_count);
 
 namespace
 {
 	constexpr bn::string_view code_credits[] = {"squishyfrogs"};
 	constexpr bn::string_view graphics_credits[] = {"moawling"};
+	constexpr bn::fixed_point puppy_pos_3[] = {
+		{-80, 20},
+		{-30, 40},
+		{30, 40}
+	};
 	constexpr bn::fixed_point puppy_pos_4[] = {
 		{-80, 20},
 		{-30, 40},
@@ -137,7 +143,7 @@ namespace bhv
 			for (int i = 0; i < _note_count; i++)
 			{
 				// sprite setup
-				builder.set_position(puppy_pos_5[i]);
+				builder.set_position(get_puppy_pos(i,_note_count));
 				_pup_sprites.push_back(builder.build());
 				_pup_sprites.back().set_horizontal_flip(i < 3);
 			}
@@ -209,22 +215,20 @@ namespace bhv
 
 			if (any_pressed_not_start_select())
 			{
-				// jump to reciting phase if player presses buttons early
-				if (_game_phase == BHV_PHASE_TEACHING)
-				{
-					//TODO: reveal all remaining notes instantly & keep on screen for a couple frames (20?)
-					reveal_all_buttons();
-					set_phase(BHV_PHASE_RECITING);
-				}
+				// if uncommented: jump to reciting phase if player presses buttons early
+				// if (_game_phase == BHV_PHASE_TEACHING)
+				// {
+				// 	reveal_all_buttons();
+				// 	set_phase(BHV_PHASE_RECITING);
+				// }
 
 				// check vs pattern
 				int btn = get_pressed_button();
-				if(btn >= 0)
+				if (btn >= 0 && (_game_phase == BHV_PHASE_RECITING))
 				{
 					recite_button(btn);
 				}
 
-				
 			}
 
 			// update conductor sprite pos
@@ -337,14 +341,6 @@ namespace bhv
 		}
 	}
 
-	void play_tone(int btn)
-	{
-		if (btn < 0 || btn >= 8)
-		{
-			return;
-		}
-		btn_tones[btn].play();
-	}
 
 	void bhv_game::reveal_button()
 	{
@@ -380,7 +376,7 @@ namespace bhv
 	{
 		bool success = check_pattern(_pattern_items[_player_index]);
 
-		bn::fixed_point pos = puppy_pos_5[_player_index];
+		bn::fixed_point pos = get_puppy_pos(_player_index,_note_count);
 		pos.set_y(pos.y() - 10); // TODO: TEMP
 		_pup_sprites[_player_index].set_position(pos);
 
@@ -416,4 +412,38 @@ namespace bhv
 		_game_phase = phase;
 		_pattern_index = 0;
 	}
+
+	
+}
+
+void play_tone(int btn)
+{
+	if (btn < 0 || btn >= 8)
+	{
+		return;
+	}
+	btn_tones[btn].play();
+}
+
+bn::fixed_point get_puppy_pos(int pup_idx, int pup_count)
+{
+	if (pup_idx >= pup_count || pup_idx < 0)
+	{
+		return bn::fixed_point();
+	}
+	switch (pup_count)
+	{
+	case 3:
+		return puppy_pos_3[pup_idx];
+		break;
+	case 4:
+		return puppy_pos_4[pup_idx];
+		break;
+	case 5:
+		return puppy_pos_5[pup_idx];
+		break;
+	default:
+		break;
+	}
+	return bn::fixed_point();
 }
