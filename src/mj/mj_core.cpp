@@ -20,7 +20,7 @@ namespace
         return (version_major << 16) + (version_minor << 8) + patch;
     }
 
-    static_assert(version(BN_VERSION_MAJOR, BN_VERSION_MINOR, BN_VERSION_PATCH) >= version(15, 7, 0),
+    static_assert(version(BN_VERSION_MAJOR, BN_VERSION_MINOR, BN_VERSION_PATCH) >= version(15, 8, 2),
                   "Butano version is too old");
 }
 
@@ -29,6 +29,7 @@ core::core() :
     _small_text_generator(small_sprite_font),
     _big_text_generator(big_sprite_font)
 {
+    _sram_data.init();
 }
 
 void core::update()

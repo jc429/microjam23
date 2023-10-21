@@ -3,7 +3,9 @@
 
 #include "bn_string.h"
 #include "bn_music_item.h"
+#include "bn_sound_item.h"
 
+#include "mj_difficulty_level.h"
 #include "mj_game_data.h"
 #include "mj_game_jingle_type.h"
 #include "mj_game_result.h"
@@ -18,8 +20,9 @@ class game
 {
 
 public:
-    static constexpr int minimum_frames = 3 * 60; //!< Minimum number of frames per game.
+    static constexpr auto minimum_frames = int(2.25 * 60); //!< Minimum number of frames per game.
     static constexpr int maximum_frames = 10 * 60; //!< Maximum number of frames per game.
+    static constexpr int games_per_speed_inc = 3; //!< Number of completed games for a speed increase.
 
     /**
      * @brief Returns the recommended total frames for the given completed games.
@@ -30,6 +33,14 @@ public:
      */
     [[nodiscard]] static int recommended_total_frames(
             int base_total_frames, int completed_games, const game_data& data);
+
+    /**
+     * @brief Returns the recommended difficulty level for the given completed games.
+     * @param completed_games Number of completed games.
+     * @param data Shared data between all games.
+     * @return Recommended difficulty level.
+     */
+    [[nodiscard]] static difficulty_level recommended_difficulty_level(int completed_games, const game_data& data);
 
     /**
      * @brief Returns the recommended music tempo for the given completed games.
@@ -46,6 +57,14 @@ public:
      * @param data Shared data between all games.
      */
     static void play_music(bn::music_item music_item, int completed_games, const game_data& data);
+
+    /**
+     * @brief Plays the given sound item with the recommended speed.
+     * @param sound_item Specifies the sound effect to play.
+     * @param completed_games Number of completed games.
+     * @param data Shared data between all games.
+     */
+    static void play_sound(bn::sound_item sound_item, int completed_games, const game_data& data);
 
     /**
      * @brief Plays the given common jingle with the recommended tempo
