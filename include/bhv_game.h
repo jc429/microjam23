@@ -12,8 +12,7 @@
 
 namespace bhv
 {
-#define __PATTERN_LEN_MAX__ 8
-#define __PUMPPY_COUNT__ 4
+#define __NOTE_COUNT_MAX__ 6
 
 	class bhv_game : public mj::game
 	{
@@ -60,22 +59,20 @@ namespace bhv
 
 	private:
 		bn::regular_bg_ptr _bg;
-		bn::vector<bn::sprite_ptr, __PATTERN_LEN_MAX__> _btn_sprites;
-
-		bn::vector<bn::sprite_ptr, __PUMPPY_COUNT__> _pup_sprites;
-		bn::fixed_point _pup_spr_pos[__PUMPPY_COUNT__];
-
+		bn::vector<bn::sprite_ptr, __NOTE_COUNT_MAX__> _btn_sprites;
+		bn::vector<bn::sprite_ptr, __NOTE_COUNT_MAX__> _pup_sprites;
 		bn::vector<bn::sprite_ptr, 3> _conductor_sprites;
-		bn::fixed_point _conductor_sprite_pos[3];
-		
+		bn::vector<bn::sprite_ptr, 5> _prompt_sprites;
+
 		int _total_frames;
 		int _show_result_frames = 60;
 		bool _victory = false;
 		bool _defeat = false;
+		int _show_prompt_frames = 30;
 
 		bhv_game_phase _game_phase;
-		int _item_count;
-		bn::vector<int, __PATTERN_LEN_MAX__> _pattern_items;
+		int _note_count;
+		bn::vector<int, __NOTE_COUNT_MAX__> _pattern_items;
 		int _pattern_index;
 		int _player_index;
 		int _frames_per_reveal;
@@ -93,6 +90,8 @@ namespace bhv
 
 		void game_tick();
 		void reveal_button();
+		void reveal_all_buttons();
+		void hide_prompt();
 		void recite_button();
 		void set_phase(bhv_game_phase phase);
 

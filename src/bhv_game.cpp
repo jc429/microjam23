@@ -15,9 +15,10 @@
 #include "bn_regular_bg_items_tmg_you_win.h"
 
 #include "bn_sprite_items_bhv_button_icons.h"
-#include "bn_sprite_items_bhv_pumppy.h"
 #include "bn_sprite_items_bhv_conductor.h"
 #include "bn_sprite_items_bhv_conductor_hands.h"
+#include "bn_sprite_items_bhv_instruction_bubble.h"
+#include "bn_sprite_items_bhv_pumppy.h"
 
 MJ_GAME_LIST_ADD(bhv::bhv_game)
 
@@ -25,6 +26,36 @@ namespace
 {
 	constexpr bn::string_view code_credits[] = {"squishyfrogs"};
 	constexpr bn::string_view graphics_credits[] = {"moawling"};
+	constexpr bn::fixed_point puppy_pos_4[] = {
+		{-80, 20},
+		{-30, 40},
+		{30, 40},
+		{80, 20}
+	};
+	constexpr bn::fixed_point puppy_pos_5[] = {
+		{-80, 20},
+		{-30, 40},
+		{15, 50},
+		{50, 40},
+		{80, 20}
+	};
+	constexpr bn::fixed_point conductor_sprite_pos[] = {
+		{20, -20},
+		{4, -20},
+		{36, -20}
+	};
+
+	constexpr bn::sound_item btn_tones[] = {
+		bn::sound_items::bhv_c2,
+		bn::sound_items::bhv_d2,
+		bn::sound_items::bhv_e2,
+		bn::sound_items::bhv_f2,
+		bn::sound_items::bhv_g2,
+		bn::sound_items::bhv_a2,
+		bn::sound_items::bhv_b2,
+		bn::sound_items::bhv_c3
+	};
+	
 }
 
 MJ_GAME_LIST_ADD_CODE_CREDITS(code_credits)
@@ -50,11 +81,11 @@ namespace bhv
 		_total_frames -= data.random.get_int(60);
 		_total_frames = bn::clamp(_total_frames, minimum_frames, maximum_frames);
 
-		_frames_per_reveal = _total_frames / 12; //TODO: fix this to match bpm
+		_frames_per_reveal = _total_frames / 18; //TODO: fix this to match bpm
 
 		// TODO: prefer longer patterns the more minigames have been cleared?
 		// 3-5 notes seems right?
-		_item_count = 3 + data.random.get_int(3);
+		_note_count = 3 + data.random.get_int(3);
 		_pattern_index = 0;
 		_player_index = 0;
 
@@ -74,10 +105,10 @@ namespace bhv
 			builder.set_z_order(10);
 
 			const int btn_spacing = 20;
-			int btns_width = _item_count * btn_spacing;
+			int btns_width = _note_count * btn_spacing;
 			bn::fixed_point btn_offset((btns_width / -2) - 40, -30);
 
-			for (int i = 0; i < _item_count; i++)
+			for (int i = 0; i < _note_count; i++)
 			{
 				// identify button for pattern
 				int button = data.random.get_int(8);
@@ -86,7 +117,8 @@ namespace bhv
 				bn::sprite_tiles_item sheet_tiles = bn::sprite_items::bhv_button_icons.tiles_item();
 
 				// sprite setup
-				builder.set_position(bn::fixed_point(btn_offset.x() + (i * btn_spacing), btn_offset.y()));
+				int y_off = -2 * button;
+				builder.set_position(bn::fixed_point(btn_offset.x() + (i * btn_spacing), btn_offset.y() + y_off));
 				_btn_sprites.push_back(builder.build());
 				int btn_spr = button * 2;
 				_btn_sprites.back().set_tiles(sheet_tiles.create_tiles(btn_spr));
@@ -100,15 +132,10 @@ namespace bhv
 			builder.set_bg_priority(1);
 			builder.set_z_order(20);
 
-			_pup_spr_pos[0] = {-80, 20};
-			_pup_spr_pos[1] = {-30, 40};
-			_pup_spr_pos[2] = {30, 40};
-			_pup_spr_pos[3] = {80, 20};
-
-			for (int i = 0; i < __PUMPPY_COUNT__; i++)
+			for (int i = 0; i < _note_count; i++)
 			{
 				// sprite setup
-				builder.set_position(_pup_spr_pos[i]);
+				builder.set_position(puppy_pos_5[i]);
 				_pup_sprites.push_back(builder.build());
 			}
 		}
@@ -119,25 +146,23 @@ namespace bhv
 			builder.set_bg_priority(1);
 			builder.set_z_order(50);
 
-			_conductor_sprite_pos[0] = {20, -20};
-
-			builder.set_position(_conductor_sprite_pos[0]);
+			builder.set_position(conductor_sprite_pos[0]);
 			_conductor_sprites.push_back(builder.release_build());
 
 			bn::sprite_builder arm_builder(bn::sprite_items::bhv_conductor_hands);
 			bn::sprite_tiles_item arm_tiles = bn::sprite_items::bhv_conductor_hands.tiles_item();
-			_conductor_sprite_pos[1] = {_conductor_sprite_pos[0].x() - 16, _conductor_sprite_pos[0].y() + 0};
-			_conductor_sprite_pos[2] = {_conductor_sprite_pos[0].x() + 16, _conductor_sprite_pos[0].y() + 0};
 			arm_builder.set_bg_priority(1);
 			arm_builder.set_z_order(50);
 
 			for (int i = 0; i < 2; i++)
 			{
-				arm_builder.set_position(_conductor_sprite_pos[i + 1]);
+				arm_builder.set_position(conductor_sprite_pos[i + 1]);
 				_conductor_sprites.push_back(arm_builder.build());
 				_conductor_sprites.back().set_tiles(arm_tiles.create_tiles(i));
 			}
 		}
+
+		// BUILD PROMPT SPEECH BUBBLE
 	}
 
 	void bhv_game::clear()
@@ -146,6 +171,7 @@ namespace bhv
 		_conductor_sprites.clear();
 		_pup_sprites.clear();
 		_pattern_items.clear();
+		_prompt_sprites.clear();
 	}
 
 	mj::game_result bhv_game::play(const mj::game_data &data)
@@ -157,23 +183,34 @@ namespace bhv
 		if (!_victory && !_defeat)
 		{
 
-			// if (data.pending_frames + (_frames_per_reveal * (1+_pattern_index)) == _total_frames)
-			if (frames_elapsed > 0 && (frames_elapsed % _frames_per_reveal == 0))
+			if (frames_elapsed > 0 && (frames_elapsed % _frames_per_reveal == 0) && (_game_phase == BHV_PHASE_TEACHING))
 			{
-				game_tick();
+				// game_tick();
+				reveal_button();
 			}
 
-			if (any_pressed_not_start_select() && (_game_phase == BHV_PHASE_RECITING))
+			if (_game_phase == BHV_PHASE_RECITING && _show_prompt_frames > 0)
+			{
+				_show_prompt_frames--;
+				if (_show_prompt_frames == 0)
+				{
+					hide_prompt();
+				}
+			}
+
+			if (any_pressed_not_start_select())
 			{
 				// jump to reciting phase if player presses buttons early
 				if (_game_phase == BHV_PHASE_TEACHING)
 				{
+					//TODO: reveal all remaining notes instantly & keep on screen for a couple frames (20?)
+					reveal_all_buttons();
 					set_phase(BHV_PHASE_RECITING);
 				}
 
 				// check vs pattern
 				int btn = get_pressed_button();
-				if(btn > 0)
+				if(btn >= 0)
 				{
 					play_tone(btn);
 				}
@@ -195,7 +232,7 @@ namespace bhv
 				bn::fixed y_float = (3.5 * bn::sin(0.005*frames_elapsed));
 				for (int i = 0; i < _conductor_sprites.size(); i++)
 				{
-					bn::fixed_point pos = _conductor_sprite_pos[i];
+					bn::fixed_point pos = conductor_sprite_pos[i];
 					pos.set_y(pos.y() + y_float);
 					_conductor_sprites[i].set_position(pos);
 				}
@@ -263,7 +300,7 @@ namespace bhv
 		{
 			return button_mapping::DOWN;
 		}
-		return 0;
+		return -1;
 	}
 
 	bool bhv_game::check_pattern(int btn)
@@ -311,36 +348,11 @@ namespace bhv
 
 	bn::optional<bn::sound_item> bhv_game::get_tone(int btn)
 	{
-		switch (btn)
+		if(btn < 0 || btn >= 8)
 		{
-		case button_mapping::A:
-			return bn::sound_items::bhv_c2;
-			break;
-		case button_mapping::B:
-			return bn::sound_items::bhv_d2;
-			break;
-		case button_mapping::L:
-			return bn::sound_items::bhv_e2;
-			break;
-		case button_mapping::R:
-			return bn::sound_items::bhv_f2;
-			break;
-		case button_mapping::UP:
-			return bn::sound_items::bhv_g2;
-			break;
-		case button_mapping::DOWN:
-			return bn::sound_items::bhv_a2;
-			break;
-		case button_mapping::LEFT:
-			return bn::sound_items::bhv_b2;
-			break;
-		case button_mapping::RIGHT:
-			return bn::sound_items::bhv_c3;
-			break;
-		default:
 			return bn::nullopt;
-			break;
 		}
+		return btn_tones[btn];
 	}
 
 	void bhv_game::advance_index()
@@ -391,14 +403,30 @@ namespace bhv
 		}
 	}
 
+	void bhv_game::reveal_all_buttons()
+	{
+		for (int i = 0; i < _btn_sprites.size(); i++)
+		{
+			_btn_sprites[i].set_visible(true);
+		}
+	}
+
+	void bhv_game::hide_prompt()
+	{
+		for (int i = 0; i < _btn_sprites.size(); i++)
+		{
+			_btn_sprites[i].set_visible(false);
+		}
+	}
+
 	void bhv_game::recite_button()
 	{
-		if (_pattern_index >= __PUMPPY_COUNT__)
+		if (_pattern_index >= __NOTE_COUNT_MAX__)
 		{
 			return;
 		}
 
-		bn::fixed_point pos = _pup_spr_pos[_pattern_index];
+		bn::fixed_point pos = puppy_pos_4[_pattern_index];
 		pos.set_y(pos.y() - 10); // TODO: TEMP
 		_pup_sprites[_pattern_index].set_position(pos);
 
