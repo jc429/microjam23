@@ -32,11 +32,13 @@ namespace bhv
 		enum bhv_game_phase
 		{
 			BHV_PHASE_TEACHING,
-			BHV_PHASE_RECITING
+			BHV_PHASE_RECITING,
+			BHV_PHASE_RESULTS
 		};
 
 	public:
 		bhv_game(int completed_games, const mj::game_data &data);
+		[[nodiscard]] mj::game_result play(const mj::game_data &data) final;
 
 		[[nodiscard]] bn::string<16> title() const final
 		{
@@ -48,16 +50,13 @@ namespace bhv
 			return _total_frames;
 		}
 
-		void fade_in(const mj::game_data &data) final;
-
-		[[nodiscard]] mj::game_result play(const mj::game_data &data) final;
-
 		[[nodiscard]] bool victory() const final
 		{
 			return _victory;
 		}
 
-		void fade_out(const mj::game_data &data) final;
+		void fade_in(const mj::game_data &data) final {}
+		void fade_out(const mj::game_data &data) final {}
 
 	private:
 		bn::regular_bg_ptr _bg;
@@ -81,15 +80,16 @@ namespace bhv
 		int _player_index;
 		int _frames_per_reveal;
 
-		void init(const mj::game_data &data);
+		void init_sprites(const mj::game_data &data);
 		void clear();
+		void end_game(bool victory);
+
+		bool any_pressed_not_start_select();
 		int get_pressed_button();
 		bool check_pattern(int btn);
+		void play_tone(int btn);
 		bn::optional<bn::sound_item> get_tone(int btn);
 		void advance_index();
-
-		void win();
-		void lose();
 
 		void game_tick();
 		void reveal_button();

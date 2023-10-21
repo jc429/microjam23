@@ -52,94 +52,20 @@ namespace bhv
 
 		_frames_per_reveal = _total_frames / 12; //TODO: fix this to match bpm
 
-		init(data);
-		_game_phase = BHV_PHASE_TEACHING;
-	}
-
-	void bhv_game::fade_in([[maybe_unused]] const mj::game_data &data)
-	{
-	}
-
-	mj::game_result bhv_game::play(const mj::game_data &data)
-	{
-		mj::game_result result;
-		result.exit = data.pending_frames == 0;
-		int frames_elapsed = _total_frames - data.pending_frames;
-
-		if (!_victory && !_defeat)
-		{
-
-			// if (data.pending_frames + (_frames_per_reveal * (1+_pattern_index)) == _total_frames)
-			if (frames_elapsed > 0 && (frames_elapsed % _frames_per_reveal == 0))
-			{
-				game_tick();
-			}
-
-			if (bn::keypad::any_pressed() && !bn::keypad::start_pressed() && !bn::keypad::select_pressed())
-			{
-				// check vs pattern
-				int btn = get_pressed_button();
-				if(btn > 0)
-				{
-					bn::optional<bn::sound_item> b = get_tone(btn);
-					if (b.get() != NULL)
-					{
-						b.get()->play();
-					}
-				}
-
-				bool success = check_pattern(_pattern_items[_player_index]);
-
-				if (success)
-				{
-					advance_index();
-				}
-				else
-				{
-					lose();
-				}
-			}
-
-			// update conductor sprite pos
-			{
-				
-				bn::fixed y_float = (3.5 * bn::sin(0.005*frames_elapsed));
-				for (int i = 0; i < _conductor_sprites.size(); i++)
-				{
-					bn::fixed_point pos = _conductor_sprite_pos[i];
-					pos.set_y(pos.y() + y_float);
-					_conductor_sprites[i].set_position(pos);
-				}
-			}
-		}
-		else
-		{
-			if (_show_result_frames)
-			{
-				--_show_result_frames;
-			}
-			else
-			{
-				result.exit = true;
-				clear();
-			}
-		}
-
-		return result;
-	}
-
-	void bhv_game::fade_out([[maybe_unused]] const mj::game_data &data)
-	{
-	}
-
-	void bhv_game::init(const mj::game_data &data)
-	{
-		clear();
 		// TODO: prefer longer patterns the more minigames have been cleared?
-		_item_count = 4 + data.random.get_int(1);
+		// 3-5 notes seems right?
+		_item_count = 3 + data.random.get_int(3);
 		_pattern_index = 0;
 		_player_index = 0;
 
+		init_sprites(data);
+		_game_phase = BHV_PHASE_TEACHING;
+	}
+
+	void bhv_game::init_sprites(const mj::game_data &data)
+	{
+		clear();
+		
 		// BUILD BUTTON SPRITES
 		{
 			// init sprite builder
@@ -149,7 +75,7 @@ namespace bhv
 
 			const int btn_spacing = 20;
 			int btns_width = _item_count * btn_spacing;
-			bn::fixed_point btn_offset((btns_width/-2) - 40,-30);
+			bn::fixed_point btn_offset((btns_width / -2) - 40, -30);
 
 			for (int i = 0; i < _item_count; i++)
 			{
@@ -162,7 +88,7 @@ namespace bhv
 				// sprite setup
 				builder.set_position(bn::fixed_point(btn_offset.x() + (i * btn_spacing), btn_offset.y()));
 				_btn_sprites.push_back(builder.build());
-				int btn_spr = button*2;
+				int btn_spr = button * 2;
 				_btn_sprites.back().set_tiles(sheet_tiles.create_tiles(btn_spr));
 				_btn_sprites.back().set_visible(false);
 			}
@@ -205,13 +131,12 @@ namespace bhv
 			arm_builder.set_bg_priority(1);
 			arm_builder.set_z_order(50);
 
-			for(int i = 0; i < 2; i++)
+			for (int i = 0; i < 2; i++)
 			{
-				arm_builder.set_position(_conductor_sprite_pos[i+1]);
+				arm_builder.set_position(_conductor_sprite_pos[i + 1]);
 				_conductor_sprites.push_back(arm_builder.build());
 				_conductor_sprites.back().set_tiles(arm_tiles.create_tiles(i));
 			}
-			
 		}
 	}
 
@@ -223,38 +148,85 @@ namespace bhv
 		_pattern_items.clear();
 	}
 
-	bool bhv_game::check_pattern(int btn)
+	mj::game_result bhv_game::play(const mj::game_data &data)
 	{
-		switch (btn)
+		mj::game_result result;
+		result.exit = data.pending_frames == 0;
+		int frames_elapsed = _total_frames - data.pending_frames;
+
+		if (!_victory && !_defeat)
 		{
-		case button_mapping::A:
-			return bn::keypad::a_pressed();
-			break;
-		case button_mapping::B:
-			return bn::keypad::b_pressed();
-			break;
-		case button_mapping::L:
-			return bn::keypad::l_pressed();
-			break;
-		case button_mapping::R:
-			return bn::keypad::r_pressed();
-			break;
-		case button_mapping::UP:
-			return bn::keypad::up_pressed();
-			break;
-		case button_mapping::DOWN:
-			return bn::keypad::down_pressed();
-			break;
-		case button_mapping::LEFT:
-			return bn::keypad::left_pressed();
-			break;
-		case button_mapping::RIGHT:
-			return bn::keypad::right_pressed();
-			break;
-		default:
-			return false;
-			break;
+
+			// if (data.pending_frames + (_frames_per_reveal * (1+_pattern_index)) == _total_frames)
+			if (frames_elapsed > 0 && (frames_elapsed % _frames_per_reveal == 0))
+			{
+				game_tick();
+			}
+
+			if (any_pressed_not_start_select() && (_game_phase == BHV_PHASE_RECITING))
+			{
+				// jump to reciting phase if player presses buttons early
+				if (_game_phase == BHV_PHASE_TEACHING)
+				{
+					set_phase(BHV_PHASE_RECITING);
+				}
+
+				// check vs pattern
+				int btn = get_pressed_button();
+				if(btn > 0)
+				{
+					play_tone(btn);
+				}
+
+				bool success = check_pattern(_pattern_items[_player_index]);
+
+				if (success)
+				{
+					advance_index();
+				}
+				else
+				{
+					end_game(false);
+				}
+			}
+
+			// update conductor sprite pos
+			{
+				bn::fixed y_float = (3.5 * bn::sin(0.005*frames_elapsed));
+				for (int i = 0; i < _conductor_sprites.size(); i++)
+				{
+					bn::fixed_point pos = _conductor_sprite_pos[i];
+					pos.set_y(pos.y() + y_float);
+					_conductor_sprites[i].set_position(pos);
+				}
+			}
 		}
+		else
+		{
+			if (_show_result_frames)
+			{
+				--_show_result_frames;
+			}
+			else
+			{
+				result.exit = true;
+				clear();
+			}
+		}
+
+		return result;
+	}
+
+	void bhv_game::end_game(bool victory)
+	{
+		_bg.set_item(victory ? bn::regular_bg_items::tmg_you_win : bn::regular_bg_items::tmg_you_lose);
+		_victory = victory;
+		_defeat = !victory;
+	}
+
+	bool bhv_game::any_pressed_not_start_select()
+	{
+		return bn::keypad::any_pressed() && !bn::keypad::start_pressed() && !bn::keypad::select_pressed();
 	}
 
 	int bhv_game::get_pressed_button()
@@ -292,6 +264,49 @@ namespace bhv
 			return button_mapping::DOWN;
 		}
 		return 0;
+	}
+
+	bool bhv_game::check_pattern(int btn)
+	{
+		switch (btn)
+		{
+		case button_mapping::A:
+			return bn::keypad::a_pressed();
+			break;
+		case button_mapping::B:
+			return bn::keypad::b_pressed();
+			break;
+		case button_mapping::L:
+			return bn::keypad::l_pressed();
+			break;
+		case button_mapping::R:
+			return bn::keypad::r_pressed();
+			break;
+		case button_mapping::UP:
+			return bn::keypad::up_pressed();
+			break;
+		case button_mapping::DOWN:
+			return bn::keypad::down_pressed();
+			break;
+		case button_mapping::LEFT:
+			return bn::keypad::left_pressed();
+			break;
+		case button_mapping::RIGHT:
+			return bn::keypad::right_pressed();
+			break;
+		default:
+			return false;
+			break;
+		}
+	}
+
+	void bhv_game::play_tone(int btn)
+	{
+		bn::optional<bn::sound_item> tone = get_tone(btn);
+		if (tone.get() != NULL)
+		{
+			tone.get()->play();
+		}
 	}
 
 	bn::optional<bn::sound_item> bhv_game::get_tone(int btn)
@@ -338,22 +353,8 @@ namespace bhv
 		_player_index++;
 		if (_player_index >= _pattern_items.size())
 		{
-			win();
+			end_game(true);
 		}
-	}
-
-	void bhv_game::win()
-	{
-		_bg.set_item(bn::regular_bg_items::tmg_you_win);
-		// result.remove_title = true;
-		_victory = true;
-	}
-
-	void bhv_game::lose()
-	{
-		_bg.set_item(bn::regular_bg_items::tmg_you_lose);
-		// result.remove_title = true;
-		_defeat = true;
 	}
 
 	void bhv_game::game_tick()
@@ -381,11 +382,7 @@ namespace bhv
 		}
 
 		_btn_sprites[_pattern_index].set_visible(true);
-		bn::optional<bn::sound_item> b = get_tone(_pattern_items[_pattern_index]);
-		if (b.get() != NULL)
-		{
-			b.get()->play();
-		}
+		play_tone(_pattern_items[_pattern_index]);
 
 		_pattern_index++;
 		if(_pattern_index == _btn_sprites.size())
@@ -405,16 +402,13 @@ namespace bhv
 		pos.set_y(pos.y() - 10); // TODO: TEMP
 		_pup_sprites[_pattern_index].set_position(pos);
 
-		bn::optional<bn::sound_item> b = get_tone(_pattern_items[_pattern_index]);
-		if (b.get() != NULL)
-		{
-			b.get()->play();
-		}
+		play_tone(_pattern_items[_pattern_index]);
 
 		_pattern_index++;
 		if (_pattern_index == _btn_sprites.size())
 		{
 			// RESULTS
+			set_phase(BHV_PHASE_RESULTS);
 		}
 
 	}
