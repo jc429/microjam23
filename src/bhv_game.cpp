@@ -19,9 +19,11 @@
 #include "bn_sprite_items_bhv_conductor_hands.h"
 #include "bn_sprite_items_bhv_conductor_head.h"
 #include "bn_sprite_items_bhv_conductor_body.h"
+#include "bn_sprite_items_bhv_conductor_arm_l.h"
 #include "bn_sprite_items_bhv_conductor_tail.h"
 #include "bn_sprite_items_bhv_instruction_bubble.h"
 #include "bn_sprite_items_bhv_pumppy.h"
+#include "bn_sprite_items_bhv_cat.h"
 
 #define __BHV_PROMPT_DISAPPEAR__ false
 #define __BHV_PLAYER_INPUTS_ALL__ false
@@ -54,7 +56,7 @@ namespace
 		{80, 20}
 	};
 	constexpr bn::fixed_point conductor_sprite_pos = {30, -20};
-	constexpr bn::fixed_point prompt_base_pos = {-6,-36};
+	constexpr bn::fixed_point prompt_base_pos = {-2,-48};
 
 	constexpr bn::sound_item btn_tones[] = {
 		bn::sound_items::bhv_c2,
@@ -143,6 +145,13 @@ namespace bhv
 			_spr_body = builder.release_build();
 		}
 		{
+			bn::sprite_builder builder(bn::sprite_items::bhv_conductor_arm_l);
+			builder.set_bg_priority(1);
+			builder.set_z_order(55);
+			builder.set_position(_pos);
+			_spr_arm_l = builder.release_build();
+		}
+		{
 			bn::sprite_builder builder(bn::sprite_items::bhv_conductor_tail);
 			builder.set_bg_priority(1);
 			builder.set_z_order(55);
@@ -151,6 +160,7 @@ namespace bhv
 		}
 		_anim_head_idle = bn::create_sprite_animate_action_forever(*_spr.get(), 6, bn::sprite_items::bhv_conductor_head.tiles_item(), 0, 1, 2, 3, 4, 5);
 		_anim_body = bn::create_sprite_animate_action_forever(*_spr_body.get(), 6, bn::sprite_items::bhv_conductor_body.tiles_item(), 0, 1, 2, 1, 0, 3);
+		_anim_arm_l = bn::create_sprite_animate_action_forever(*_spr_arm_l.get(), 6, bn::sprite_items::bhv_conductor_arm_l.tiles_item(), 0, 1, 2, 1, 0, 3);
 		_anim_tail = bn::create_sprite_animate_action_forever(*_spr_tail.get(), 6, bn::sprite_items::bhv_conductor_tail.tiles_item(), 0, 1, 2);
 	}
 
@@ -169,6 +179,10 @@ namespace bhv
 		{
 			_spr_body.get()->set_position(pos + bn::fixed_point(0,8));
 		}
+		if (_spr_arm_l.has_value())
+		{
+			_spr_arm_l.get()->set_position(pos + bn::fixed_point(-22, 0));
+		}
 		if (_spr_tail.has_value())
 		{
 			_spr_tail.get()->set_position(pos + bn::fixed_point(8, 24));
@@ -184,6 +198,10 @@ namespace bhv
 		if (_anim_body.has_value())
 		{
 			_anim_body.get()->update();
+		}
+		if (_anim_arm_l.has_value())
+		{
+			_anim_arm_l.get()->update();
 		}
 		if (_anim_tail.has_value())
 		{
@@ -215,11 +233,13 @@ namespace bhv
 		_note_count = 3 + data.random.get_int(3);
 		_prompt_index = 0;
 		_recite_index = 0;
-		_player_index = 2 + data.random.get_int(3);
-		if(_player_index >= _note_count)
-		{
-			_player_index = _note_count - 1;
-		}
+		// _player_index = 2 + data.random.get_int(3);
+		// if(_player_index >= _note_count)
+		// {
+		// 	_player_index = _note_count - 1;
+		// }
+		_player_index = _note_count-1;
+
 		_player_pup.set_position(get_puppy_pos(_player_index, _note_count));
 		_conductor.set_position(conductor_sprite_pos);
 
@@ -260,21 +280,21 @@ namespace bhv
 
 		// BUILD CAT SPRITES
 		{
-			bn::sprite_builder builder(bn::sprite_items::bhv_pumppy);
+			bn::sprite_builder builder(bn::sprite_items::bhv_cat);
 			builder.set_bg_priority(1);
 			builder.set_z_order(20);
 
-			for (int i = 0; i < _note_count; i++)
+			for (int i = 0; i < _note_count-1; i++)
 			{
 				// sprite setup
-				builder.set_position(get_puppy_pos(i,_note_count));
-				_pup_sprites.push_back(builder.build());
-				_pup_sprites.back().set_horizontal_flip(i < 3);
-				_anim_cats_idle.push_back(bn::create_sprite_animate_action_forever(_pup_sprites.back(), 6, bn::sprite_items::bhv_pumppy.tiles_item(), 0, 1, 2, 3));
-				
+				bn::fixed_point pos = get_puppy_pos(i ,_note_count);
+				builder.set_position(pos);
+				_cat_sprites.push_back(builder.build());
+				_cat_sprites.back().set_horizontal_flip(i < 3);
+				_anim_cats_idle.push_back(bn::create_sprite_animate_action_forever(_cat_sprites.back(), 6, bn::sprite_items::bhv_cat.tiles_item(), 0, 1, 2, 3, 4, 5));
 			}
 			// TODO: split pup and cat sprites
-			// _anim_sing = bn::create_sprite_animate_action_once(_pup_sprites.back(), 6, bn::sprite_items::bhv_pumppy.tiles_item(), 4, 5, 6, 7, 4);
+			// _anim_sing = bn::create_sprite_animate_action_once(_cat_sprites.back(), 6, bn::sprite_items::bhv_pumppy.tiles_item(), 4, 5, 6, 7, 4);
 		}
 
 		// BUILD PROMPT SPEECH BUBBLE
@@ -308,8 +328,7 @@ namespace bhv
 	void bhv_game::clear()
 	{
 		_btn_sprites.clear();
-		_conductor_sprites.clear();
-		_pup_sprites.clear();
+		_cat_sprites.clear();
 		_pattern_items.clear();
 		_prompt_sprites.clear();
 		_anim_cats_idle.clear();
@@ -519,7 +538,7 @@ namespace bhv
 
 		bn::fixed_point pos = get_puppy_pos(_recite_index,_note_count);
 		pos.set_y(pos.y() - 10); // TODO: TEMP
-		_pup_sprites[_recite_index].set_position(pos);
+		_cat_sprites[_recite_index].set_position(pos);
 
 		play_tone(btn);
 
@@ -547,7 +566,7 @@ namespace bhv
 
 		bn::fixed_point pos = get_puppy_pos(_recite_index, _note_count);
 		pos.set_y(pos.y() - 10); // TODO: TEMP
-		_pup_sprites[_recite_index].set_position(pos);
+		_cat_sprites[_recite_index].set_position(pos);
 
 		play_tone(btn);
 
@@ -582,7 +601,7 @@ namespace bhv
 		// cats
 		for (auto it = _anim_cats_idle.begin(), end = _anim_cats_idle.end(); it != end;)
 		{
-			bn::sprite_animate_action<4> &action = *it;
+			bn::sprite_animate_action<6> &action = *it;
 			action.update();
 
 			if (action.done())

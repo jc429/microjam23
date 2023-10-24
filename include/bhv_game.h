@@ -18,6 +18,7 @@ namespace bhv
 	class bhv_spr
 	{
 	public:
+		virtual ~bhv_spr() = default;
 		virtual void set_position(bn::fixed_point pos);
 		virtual void update_anim() = 0;
 
@@ -58,10 +59,12 @@ namespace bhv
 
 	private:
 		bn::optional<bn::sprite_ptr> _spr_body;
+		bn::optional<bn::sprite_ptr> _spr_arm_l;
 		bn::optional<bn::sprite_ptr> _spr_tail;
 		bn::optional<bn::sprite_animate_action<6>> _anim_head_idle;
 		bn::optional<bn::sprite_animate_action<6>> _anim_head_sing;
 		bn::optional<bn::sprite_animate_action<6>> _anim_body;
+		bn::optional<bn::sprite_animate_action<6>> _anim_arm_l;
 		bn::optional<bn::sprite_animate_action<3>> _anim_tail;
 	};
 
@@ -111,11 +114,10 @@ namespace bhv
 	private:
 		bn::regular_bg_ptr _bg;
 		bn::vector<bn::sprite_ptr, __BHV_NOTE_COUNT_MAX__> _btn_sprites;
-		bn::vector<bn::sprite_ptr, __BHV_NOTE_COUNT_MAX__> _pup_sprites;
-		bn::vector<bn::sprite_ptr, 3> _conductor_sprites;
+		bn::vector<bn::sprite_ptr, __BHV_NOTE_COUNT_MAX__> _cat_sprites;
 		bn::vector<bn::sprite_ptr, 7> _prompt_sprites;
 
-		bn::vector<bn::sprite_animate_action<4>, __BHV_NOTE_COUNT_MAX__> _anim_cats_idle;
+		bn::vector<bn::sprite_animate_action<6>, __BHV_NOTE_COUNT_MAX__> _anim_cats_idle;
 
 		bhv_puppy _player_pup;
 		// bn::vector<bhv_cat, __BHV_NOTE_COUNT_MAX__> _singing_cats;
