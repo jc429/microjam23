@@ -20,6 +20,7 @@
 #include "bn_sprite_items_bhv_conductor_head.h"
 #include "bn_sprite_items_bhv_conductor_body.h"
 #include "bn_sprite_items_bhv_conductor_arm_l.h"
+#include "bn_sprite_items_bhv_conductor_arm_r.h"
 #include "bn_sprite_items_bhv_conductor_tail.h"
 #include "bn_sprite_items_bhv_instruction_bubble.h"
 #include "bn_sprite_items_bhv_pumppy.h"
@@ -152,6 +153,13 @@ namespace bhv
 			_spr_arm_l = builder.release_build();
 		}
 		{
+			bn::sprite_builder builder(bn::sprite_items::bhv_conductor_arm_r);
+			builder.set_bg_priority(1);
+			builder.set_z_order(40);
+			builder.set_position(_pos);
+			_spr_arm_r = builder.release_build();
+		}
+		{
 			bn::sprite_builder builder(bn::sprite_items::bhv_conductor_tail);
 			builder.set_bg_priority(1);
 			builder.set_z_order(55);
@@ -161,6 +169,7 @@ namespace bhv
 		_anim_head_idle = bn::create_sprite_animate_action_forever(*_spr.get(), 6, bn::sprite_items::bhv_conductor_head.tiles_item(), 0, 1, 2, 3, 4, 5);
 		_anim_body = bn::create_sprite_animate_action_forever(*_spr_body.get(), 6, bn::sprite_items::bhv_conductor_body.tiles_item(), 0, 1, 2, 1, 0, 3);
 		_anim_arm_l = bn::create_sprite_animate_action_forever(*_spr_arm_l.get(), 6, bn::sprite_items::bhv_conductor_arm_l.tiles_item(), 0, 1, 2, 1, 0, 3);
+		_anim_arm_r = bn::create_sprite_animate_action_forever(*_spr_arm_r.get(), 6, bn::sprite_items::bhv_conductor_arm_r.tiles_item(), 0, 1, 2, 1, 0, 3);
 		_anim_tail = bn::create_sprite_animate_action_forever(*_spr_tail.get(), 6, bn::sprite_items::bhv_conductor_tail.tiles_item(), 0, 1, 2);
 	}
 
@@ -183,6 +192,10 @@ namespace bhv
 		{
 			_spr_arm_l.get()->set_position(pos + bn::fixed_point(-22, 0));
 		}
+		if (_spr_arm_r.has_value())
+		{
+			_spr_arm_r.get()->set_position(pos + bn::fixed_point(18, 1));
+		}
 		if (_spr_tail.has_value())
 		{
 			_spr_tail.get()->set_position(pos + bn::fixed_point(8, 24));
@@ -202,6 +215,10 @@ namespace bhv
 		if (_anim_arm_l.has_value())
 		{
 			_anim_arm_l.get()->update();
+		}
+		if (_anim_arm_r.has_value())
+		{
+			_anim_arm_r.get()->update();
 		}
 		if (_anim_tail.has_value())
 		{

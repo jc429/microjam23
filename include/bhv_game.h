@@ -60,11 +60,13 @@ namespace bhv
 	private:
 		bn::optional<bn::sprite_ptr> _spr_body;
 		bn::optional<bn::sprite_ptr> _spr_arm_l;
+		bn::optional<bn::sprite_ptr> _spr_arm_r;
 		bn::optional<bn::sprite_ptr> _spr_tail;
 		bn::optional<bn::sprite_animate_action<6>> _anim_head_idle;
 		bn::optional<bn::sprite_animate_action<6>> _anim_head_sing;
 		bn::optional<bn::sprite_animate_action<6>> _anim_body;
 		bn::optional<bn::sprite_animate_action<6>> _anim_arm_l;
+		bn::optional<bn::sprite_animate_action<6>> _anim_arm_r;
 		bn::optional<bn::sprite_animate_action<3>> _anim_tail;
 	};
 
