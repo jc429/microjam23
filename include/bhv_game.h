@@ -15,18 +15,54 @@ namespace bhv
 {
 #define __BHV_NOTE_COUNT_MAX__ 6
 
-	class bhv_puppy
+	class bhv_spr
+	{
+	public:
+		virtual void set_position(bn::fixed_point pos);
+		virtual void update_anim() = 0;
+
+	protected:
+		bn::fixed_point _pos;
+		bn::optional<bn::sprite_ptr> _spr;
+	};
+
+	class bhv_puppy : public bhv_spr
 	{
 	public:
 		bhv_puppy();
-		void set_position(bn::fixed_point pos);
-		void update_anim();
+		void update_anim() override;
 
 	private:
-		bn::fixed_point _pos;
-		bn::optional<bn::sprite_ptr> _spr;
-		bn::optional<bn::sprite_animate_action<4>> _anim_pup_idle;
-		bn::optional<bn::sprite_animate_action<5>> _anim_pup_sing;
+		bn::optional<bn::sprite_animate_action<4>> _anim_idle;
+		bn::optional<bn::sprite_animate_action<5>> _anim_sing;
+	};
+
+	class bhv_cat : public bhv_spr
+	{
+	public:
+		bhv_cat();
+		void update_anim() override;
+
+	private:
+		bn::optional<bn::sprite_animate_action<4>> _anim_idle;
+		bn::optional<bn::sprite_animate_action<5>> _anim_sing;
+	};
+
+	class bhv_conductor : public bhv_spr
+	{
+	public:
+		bhv_conductor();
+		~bhv_conductor();
+		void set_position(bn::fixed_point pos) override;
+		void update_anim() override;
+
+	private:
+		bn::optional<bn::sprite_ptr> _spr_body;
+		bn::optional<bn::sprite_ptr> _spr_tail;
+		bn::optional<bn::sprite_animate_action<6>> _anim_head_idle;
+		bn::optional<bn::sprite_animate_action<6>> _anim_head_sing;
+		bn::optional<bn::sprite_animate_action<6>> _anim_body;
+		bn::optional<bn::sprite_animate_action<3>> _anim_tail;
 	};
 
 	class bhv_game : public mj::game
@@ -82,6 +118,8 @@ namespace bhv
 		bn::vector<bn::sprite_animate_action<4>, __BHV_NOTE_COUNT_MAX__> _anim_cats_idle;
 
 		bhv_puppy _player_pup;
+		// bn::vector<bhv_cat, __BHV_NOTE_COUNT_MAX__> _singing_cats;
+		bhv_conductor _conductor;
 
 		int _total_frames;
 		int _show_result_frames = 60;

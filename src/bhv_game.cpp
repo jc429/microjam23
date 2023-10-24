@@ -16,8 +16,10 @@
 #include "bn_regular_bg_items_tmg_you_win.h"
 
 #include "bn_sprite_items_bhv_button_icons.h"
-#include "bn_sprite_items_bhv_conductor.h"
 #include "bn_sprite_items_bhv_conductor_hands.h"
+#include "bn_sprite_items_bhv_conductor_head.h"
+#include "bn_sprite_items_bhv_conductor_body.h"
+#include "bn_sprite_items_bhv_conductor_tail.h"
 #include "bn_sprite_items_bhv_instruction_bubble.h"
 #include "bn_sprite_items_bhv_pumppy.h"
 
@@ -51,12 +53,8 @@ namespace
 		{50, 40},
 		{80, 20}
 	};
-	constexpr bn::fixed_point conductor_sprite_pos[] = {
-		{20, -20},
-		{4, -20},
-		{36, -20}
-	};
-	constexpr bn::fixed_point prompt_base_pos = {-16,-36};
+	constexpr bn::fixed_point conductor_sprite_pos = {30, -20};
+	constexpr bn::fixed_point prompt_base_pos = {-6,-36};
 
 	constexpr bn::sound_item btn_tones[] = {
 		bn::sound_items::bhv_c2,
@@ -78,34 +76,122 @@ MJ_GAME_LIST_ADD_GRAPHICS_CREDITS(graphics_credits)
 
 namespace bhv
 {
-	bhv_puppy::bhv_puppy()
-	{
-		_pos = bn::fixed_point(0,0);
-		bn::sprite_builder builder(bn::sprite_items::bhv_pumppy);
-		builder.set_bg_priority(1);
-		builder.set_z_order(20);
-		builder.set_position(_pos);
-		_spr = builder.release_build();
-		_anim_pup_idle = bn::create_sprite_animate_action_forever(*_spr.get(), 6, bn::sprite_items::bhv_pumppy.tiles_item(), 0, 1, 2, 3);
-		_anim_pup_sing = bn::create_sprite_animate_action_once(*_spr.get(), 6, bn::sprite_items::bhv_pumppy.tiles_item(), 4, 5, 6, 7, 4);
-	}
-
-	void bhv_puppy::set_position(bn::fixed_point pos)
+	void bhv_spr::set_position(bn::fixed_point pos)
 	{
 		_pos = pos;
-		if(_spr.has_value())
+		if (_spr.has_value())
 		{
 			_spr.get()->set_position(pos);
 		}
 	}
 
+	bhv_puppy::bhv_puppy()
+	{
+		_pos = bn::fixed_point(0, 0);
+		bn::sprite_builder builder(bn::sprite_items::bhv_pumppy);
+		builder.set_bg_priority(1);
+		builder.set_z_order(20);
+		builder.set_position(_pos);
+		_spr = builder.release_build();
+		_anim_idle = bn::create_sprite_animate_action_forever(*_spr.get(), 6, bn::sprite_items::bhv_pumppy.tiles_item(), 0, 1, 2, 3);
+		_anim_sing = bn::create_sprite_animate_action_once(*_spr.get(), 6, bn::sprite_items::bhv_pumppy.tiles_item(), 4, 5, 6, 7, 4);
+	}
+
 	void bhv_puppy::update_anim()
 	{
-		if (_anim_pup_idle.has_value())
+		if (_anim_idle.has_value())
 		{
-			_anim_pup_idle.get()->update();
+			_anim_idle.get()->update();
 		}
 	}
+
+	bhv_cat::bhv_cat()
+	{
+		_pos = bn::fixed_point(0, 0);
+		bn::sprite_builder builder(bn::sprite_items::bhv_pumppy);
+		builder.set_bg_priority(1);
+		builder.set_z_order(20);
+		builder.set_position(_pos);
+		_spr = builder.release_build();
+		_anim_idle = bn::create_sprite_animate_action_forever(*_spr.get(), 6, bn::sprite_items::bhv_pumppy.tiles_item(), 0, 1, 2, 3);
+		_anim_sing = bn::create_sprite_animate_action_once(*_spr.get(), 6, bn::sprite_items::bhv_pumppy.tiles_item(), 4, 5, 6, 7, 4);
+	}
+
+	void bhv_cat::update_anim()
+	{
+		if (_anim_idle.has_value())
+		{
+			_anim_idle.get()->update();
+		}
+	}
+
+	bhv_conductor::bhv_conductor()
+	{
+		_pos = bn::fixed_point(0, 0);
+		{
+			bn::sprite_builder builder(bn::sprite_items::bhv_conductor_head);
+			builder.set_bg_priority(1);
+			builder.set_z_order(45);
+			builder.set_position(_pos);
+			_spr = builder.release_build();
+		}
+		{
+			bn::sprite_builder builder(bn::sprite_items::bhv_conductor_body);
+			builder.set_bg_priority(1);
+			builder.set_z_order(50);
+			builder.set_position(_pos);
+			_spr_body = builder.release_build();
+		}
+		{
+			bn::sprite_builder builder(bn::sprite_items::bhv_conductor_tail);
+			builder.set_bg_priority(1);
+			builder.set_z_order(55);
+			builder.set_position(_pos);
+			_spr_tail = builder.release_build();
+		}
+		_anim_head_idle = bn::create_sprite_animate_action_forever(*_spr.get(), 6, bn::sprite_items::bhv_conductor_head.tiles_item(), 0, 1, 2, 3, 4, 5);
+		_anim_body = bn::create_sprite_animate_action_forever(*_spr_body.get(), 6, bn::sprite_items::bhv_conductor_body.tiles_item(), 0, 1, 2, 1, 0, 3);
+		_anim_tail = bn::create_sprite_animate_action_forever(*_spr_tail.get(), 6, bn::sprite_items::bhv_conductor_tail.tiles_item(), 0, 1, 2);
+	}
+
+	bhv_conductor::~bhv_conductor()
+	{
+	}
+
+	void bhv_conductor::set_position(bn::fixed_point pos)
+	{
+		_pos = pos;
+		if (_spr.has_value())
+		{
+			_spr.get()->set_position(pos + bn::fixed_point(1, -15));
+		}
+		if (_spr_body.has_value())
+		{
+			_spr_body.get()->set_position(pos + bn::fixed_point(0,8));
+		}
+		if (_spr_tail.has_value())
+		{
+			_spr_tail.get()->set_position(pos + bn::fixed_point(8, 24));
+		}
+	}
+
+	void bhv_conductor::update_anim()
+	{
+		if (_anim_head_idle.has_value())
+		{
+			_anim_head_idle.get()->update();
+		}
+		if (_anim_body.has_value())
+		{
+			_anim_body.get()->update();
+		}
+		if (_anim_tail.has_value())
+		{
+			_anim_tail.get()->update();
+		}
+	}
+
+/*************************************************************************************************************************************/
 
 	bhv_game::bhv_game(int completed_games, const mj::game_data &data) : 
 		_bg(bn::regular_bg_items::bhv_bg.create_bg((256 - 240) / 2, (256 - 160) / 2)),
@@ -135,6 +221,7 @@ namespace bhv
 			_player_index = _note_count - 1;
 		}
 		_player_pup.set_position(get_puppy_pos(_player_index, _note_count));
+		_conductor.set_position(conductor_sprite_pos);
 
 		init_sprites(data);
 		_game_phase = BHV_PHASE_TEACHING;
@@ -160,7 +247,7 @@ namespace bhv
 				bn::sprite_tiles_item sheet_tiles = bn::sprite_items::bhv_button_icons.tiles_item();
 
 				// sprite setup
-				int x_off = ((i - _note_count) * 18) + 4;
+				int x_off = ((i - _note_count) * 17) + 4;
 				int y_off = (-2 * button) + 6;
 				bn::fixed_point pos = {prompt_base_pos.x() + x_off, prompt_base_pos.y() + y_off};
 				builder.set_position(pos);
@@ -187,30 +274,7 @@ namespace bhv
 				
 			}
 			// TODO: split pup and cat sprites
-			// _anim_pup_sing = bn::create_sprite_animate_action_once(_pup_sprites.back(), 6, bn::sprite_items::bhv_pumppy.tiles_item(), 4, 5, 6, 7, 4);
-		}
-
-
-		// BUILD CONDUCTOR SPRITES
-		{
-			bn::sprite_builder builder(bn::sprite_items::bhv_conductor);
-			builder.set_bg_priority(1);
-			builder.set_z_order(50);
-
-			builder.set_position(conductor_sprite_pos[0]);
-			_conductor_sprites.push_back(builder.release_build());
-
-			bn::sprite_builder arm_builder(bn::sprite_items::bhv_conductor_hands);
-			bn::sprite_tiles_item arm_tiles = bn::sprite_items::bhv_conductor_hands.tiles_item();
-			arm_builder.set_bg_priority(1);
-			arm_builder.set_z_order(50);
-
-			for (int i = 0; i < 2; i++)
-			{
-				arm_builder.set_position(conductor_sprite_pos[i + 1]);
-				_conductor_sprites.push_back(arm_builder.build());
-				_conductor_sprites.back().set_tiles(arm_tiles.create_tiles(i));
-			}
+			// _anim_sing = bn::create_sprite_animate_action_once(_pup_sprites.back(), 6, bn::sprite_items::bhv_pumppy.tiles_item(), 4, 5, 6, 7, 4);
 		}
 
 		// BUILD PROMPT SPEECH BUBBLE
@@ -311,13 +375,10 @@ namespace bhv
 			
 			// update conductor sprite pos
 			{
-				bn::fixed y_float = (3.5 * bn::sin(0.005*frames_elapsed));
-				for (int i = 0; i < _conductor_sprites.size(); i++)
-				{
-					bn::fixed_point pos = conductor_sprite_pos[i];
-					pos.set_y(pos.y() + y_float);
-					_conductor_sprites[i].set_position(pos);
-				}
+				// bn::fixed y_float = (3.5 * bn::sin(0.005*frames_elapsed));
+				// bn::fixed_point pos = conductor_sprite_pos;
+				// pos.set_y(pos.y() + y_float);
+				// _conductor.set_position(pos);
 			}
 		}
 		else
@@ -536,6 +597,7 @@ namespace bhv
 		}
 
 		_player_pup.update_anim();
+		_conductor.update_anim();
 	}
 
 }
