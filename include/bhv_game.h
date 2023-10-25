@@ -20,7 +20,10 @@ namespace bhv
 	public:
 		virtual ~bhv_spr() = default;
 		virtual void set_position(bn::fixed_point pos);
+		bn::fixed_point get_position() { return _pos; }
 		virtual void update_anim() = 0;
+		void set_flip(bool flip);
+		virtual void set_wait_updates(int frames) = 0;
 
 	protected:
 		bn::fixed_point _pos;
@@ -32,6 +35,7 @@ namespace bhv
 	public:
 		bhv_puppy();
 		void update_anim() override;
+		void set_wait_updates(int frames) override;
 
 	private:
 		bn::optional<bn::sprite_animate_action<4>> _anim_idle;
@@ -41,11 +45,12 @@ namespace bhv
 	class bhv_cat : public bhv_spr
 	{
 	public:
-		bhv_cat();
+		bhv_cat(bn::fixed_point pos);
 		void update_anim() override;
+		void set_wait_updates(int frames) override;
 
 	private:
-		bn::optional<bn::sprite_animate_action<4>> _anim_idle;
+		bn::optional<bn::sprite_animate_action<6>> _anim_idle;
 		bn::optional<bn::sprite_animate_action<5>> _anim_sing;
 	};
 
@@ -56,6 +61,7 @@ namespace bhv
 		~bhv_conductor();
 		void set_position(bn::fixed_point pos) override;
 		void update_anim() override;
+		void set_wait_updates(int frames) override;
 
 	private:
 		bn::optional<bn::sprite_ptr> _spr_body;
@@ -107,7 +113,7 @@ namespace bhv
 
 		[[nodiscard]] bool victory() const final
 		{
-			return _victory;
+			return _beats_to_victory == 0;
 		}
 
 		void fade_in(const mj::game_data &data) final {}
@@ -116,19 +122,20 @@ namespace bhv
 	private:
 		bn::regular_bg_ptr _bg;
 		bn::vector<bn::sprite_ptr, __BHV_NOTE_COUNT_MAX__> _btn_sprites;
-		bn::vector<bn::sprite_ptr, __BHV_NOTE_COUNT_MAX__> _cat_sprites;
 		bn::vector<bn::sprite_ptr, 7> _prompt_sprites;
-
-		bn::vector<bn::sprite_animate_action<6>, __BHV_NOTE_COUNT_MAX__> _anim_cats_idle;
+		bn::optional<bn::sprite_ptr> _cat_sing_box;
+		bn::optional<bn::sprite_ptr> _cat_sing_btn;
+		bn::optional<bn::sprite_ptr> _pup_sing_box;
+		bn::optional<bn::sprite_ptr> _pup_sing_btn;
 
 		bhv_puppy _player_pup;
-		// bn::vector<bhv_cat, __BHV_NOTE_COUNT_MAX__> _singing_cats;
+		bn::vector<bhv_cat, __BHV_NOTE_COUNT_MAX__> _singing_cats;
 		bhv_conductor _conductor;
 
 		int _total_frames;
 		int _show_result_frames = 60;
-		bool _victory = false;
-		bool _defeat = false;
+		int _beats_to_victory = -1;
+		int _beats_to_defeat = -1;
 		int _show_prompt_frames = 30;
 
 		bhv_game_phase _game_phase;
@@ -138,11 +145,14 @@ namespace bhv
 		int _prompt_index;
 		int _recite_index;
 		int _player_index;
-		int _frames_per_reveal;
-		bool _player_input_allowed;
+		int _frames_per_beat;
+		int _player_on_tempo;
+		bool _player_was_correct;
 
 		void init_sprites(const mj::game_data &data);
 		void clear();
+		void start_win();
+		void start_lose();
 
 		bool any_pressed_not_start_select();
 		int get_pressed_button();
@@ -150,7 +160,9 @@ namespace bhv
 		
 		void reveal_button();
 		void reveal_all_buttons();
+		void mark_button(int index);
 		void hide_prompt();
+		void player_press_button();
 		void player_recite_button(int btn);
 		void cpu_recite_button();
 		void advance_recite_index();
