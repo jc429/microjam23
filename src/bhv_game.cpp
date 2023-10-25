@@ -1,3 +1,7 @@
+#include "bhv_entity.h"
+#include "bhv_puppy.h"
+#include "bhv_cat.h"
+#include "bhv_conductor.h"
 #include "bhv_game.h"
 
 #include "bn_fixed_point.h"
@@ -16,15 +20,8 @@
 #include "bn_regular_bg_items_tmg_you_win.h"
 
 #include "bn_sprite_items_bhv_button_icons.h"
-#include "bn_sprite_items_bhv_conductor_hands.h"
-#include "bn_sprite_items_bhv_conductor_head.h"
-#include "bn_sprite_items_bhv_conductor_body.h"
-#include "bn_sprite_items_bhv_conductor_arm_l.h"
-#include "bn_sprite_items_bhv_conductor_arm_r.h"
-#include "bn_sprite_items_bhv_conductor_tail.h"
 #include "bn_sprite_items_bhv_instruction_bubble.h"
 #include "bn_sprite_items_bhv_sing_box.h"
-#include "bn_sprite_items_bhv_pumppy.h"
 #include "bn_sprite_items_bhv_cat.h"
 
 #define __BHV_PROMPT_DISAPPEAR__ false
@@ -83,210 +80,6 @@ MJ_GAME_LIST_ADD_GRAPHICS_CREDITS(graphics_credits)
 
 namespace bhv
 {
-	void bhv_spr::set_position(bn::fixed_point pos)
-	{
-		_pos = pos;
-		if (_spr.has_value())
-		{
-			_spr.get()->set_position(pos);
-		}
-	}
-
-	void bhv_spr::set_flip(bool flip)
-	{
-		if (_spr.has_value())
-		{
-			_spr.get()->set_horizontal_flip(flip);
-		}
-	}
-
-	bhv_puppy::bhv_puppy()
-	{
-		_pos = bn::fixed_point(0, 0);
-		bn::sprite_builder builder(bn::sprite_items::bhv_pumppy);
-		builder.set_bg_priority(1);
-		builder.set_z_order(20);
-		builder.set_position(_pos);
-		_spr = builder.release_build();
-		_anim_idle = bn::create_sprite_animate_action_forever(*_spr.get(), 6, bn::sprite_items::bhv_pumppy.tiles_item(), 0, 1, 2, 3);
-		_anim_sing = bn::create_sprite_animate_action_once(*_spr.get(), 6, bn::sprite_items::bhv_pumppy.tiles_item(), 4, 5, 6, 7, 4);
-	}
-
-	void bhv_puppy::update_anim()
-	{
-		if (_anim_idle.has_value())
-		{
-			_anim_idle.get()->update();
-		}
-	}
-
-	void bhv_puppy::set_wait_updates(int frames)
-	{
-		if (_anim_idle.has_value())
-		{
-			_anim_idle.get()->set_wait_updates(frames);
-		}
-		if (_anim_sing.has_value())
-		{
-			_anim_sing.get()->set_wait_updates(frames);
-		}
-	}
-
-	bhv_cat::bhv_cat(bn::fixed_point pos)
-	{
-		_pos = pos;
-		bn::sprite_builder builder(bn::sprite_items::bhv_cat);
-		builder.set_bg_priority(1);
-		builder.set_z_order(20);
-		builder.set_position(_pos);
-		_spr = builder.release_build();
-		_anim_idle = bn::create_sprite_animate_action_forever(*_spr.get(), 6, bn::sprite_items::bhv_cat.tiles_item(), 0, 1, 2, 3, 4, 5);
-		_anim_sing = bn::create_sprite_animate_action_once(*_spr.get(), 6, bn::sprite_items::bhv_cat.tiles_item(), 4, 5, 6, 7, 4);
-	}
-
-	void bhv_cat::update_anim()
-	{
-		if (_anim_idle.has_value())
-		{
-			_anim_idle.get()->update();
-		}
-	}
-
-	void bhv_cat::set_wait_updates(int frames)
-	{
-		if (_anim_idle.has_value())
-		{
-			_anim_idle.get()->set_wait_updates(frames);
-		}
-		if (_anim_sing.has_value())
-		{
-			_anim_sing.get()->set_wait_updates(frames);
-		}
-	}
-
-	bhv_conductor::bhv_conductor()
-	{
-		_pos = bn::fixed_point(0, 0);
-		{
-			bn::sprite_builder builder(bn::sprite_items::bhv_conductor_head);
-			builder.set_bg_priority(1);
-			builder.set_z_order(45);
-			builder.set_position(_pos);
-			_spr = builder.release_build();
-		}
-		{
-			bn::sprite_builder builder(bn::sprite_items::bhv_conductor_body);
-			builder.set_bg_priority(1);
-			builder.set_z_order(50);
-			builder.set_position(_pos);
-			_spr_body = builder.release_build();
-		}
-		{
-			bn::sprite_builder builder(bn::sprite_items::bhv_conductor_arm_l);
-			builder.set_bg_priority(1);
-			builder.set_z_order(55);
-			builder.set_position(_pos);
-			_spr_arm_l = builder.release_build();
-		}
-		{
-			bn::sprite_builder builder(bn::sprite_items::bhv_conductor_arm_r);
-			builder.set_bg_priority(1);
-			builder.set_z_order(40);
-			builder.set_position(_pos);
-			_spr_arm_r = builder.release_build();
-		}
-		{
-			bn::sprite_builder builder(bn::sprite_items::bhv_conductor_tail);
-			builder.set_bg_priority(1);
-			builder.set_z_order(55);
-			builder.set_position(_pos);
-			_spr_tail = builder.release_build();
-		}
-		_anim_head_idle = bn::create_sprite_animate_action_forever(*_spr.get(), 6, bn::sprite_items::bhv_conductor_head.tiles_item(), 0, 1, 2, 3, 4, 5);
-		_anim_body = bn::create_sprite_animate_action_forever(*_spr_body.get(), 6, bn::sprite_items::bhv_conductor_body.tiles_item(), 0, 1, 2, 1, 0, 3);
-		_anim_arm_l = bn::create_sprite_animate_action_forever(*_spr_arm_l.get(), 6, bn::sprite_items::bhv_conductor_arm_l.tiles_item(), 0, 1, 2, 1, 0, 3);
-		_anim_arm_r = bn::create_sprite_animate_action_forever(*_spr_arm_r.get(), 6, bn::sprite_items::bhv_conductor_arm_r.tiles_item(), 0, 1, 2, 1, 0, 3);
-		_anim_tail = bn::create_sprite_animate_action_forever(*_spr_tail.get(), 6, bn::sprite_items::bhv_conductor_tail.tiles_item(), 0, 1, 2);
-	}
-
-	bhv_conductor::~bhv_conductor()
-	{
-	}
-
-	void bhv_conductor::set_position(bn::fixed_point pos)
-	{
-		_pos = pos;
-		if (_spr.has_value())
-		{
-			_spr.get()->set_position(pos + bn::fixed_point(1, -15));
-		}
-		if (_spr_body.has_value())
-		{
-			_spr_body.get()->set_position(pos + bn::fixed_point(0,8));
-		}
-		if (_spr_arm_l.has_value())
-		{
-			_spr_arm_l.get()->set_position(pos + bn::fixed_point(-22, 0));
-		}
-		if (_spr_arm_r.has_value())
-		{
-			_spr_arm_r.get()->set_position(pos + bn::fixed_point(18, 1));
-		}
-		if (_spr_tail.has_value())
-		{
-			_spr_tail.get()->set_position(pos + bn::fixed_point(8, 24));
-		}
-	}
-
-	void bhv_conductor::update_anim()
-	{
-		if (_anim_head_idle.has_value())
-		{
-			_anim_head_idle.get()->update();
-		}
-		if (_anim_body.has_value())
-		{
-			_anim_body.get()->update();
-		}
-		if (_anim_arm_l.has_value())
-		{
-			_anim_arm_l.get()->update();
-		}
-		if (_anim_arm_r.has_value())
-		{
-			_anim_arm_r.get()->update();
-		}
-		if (_anim_tail.has_value())
-		{
-			_anim_tail.get()->update();
-		}
-	}
-
-	void bhv_conductor::set_wait_updates(int frames)
-	{
-		if (_anim_head_idle.has_value())
-		{
-			_anim_head_idle.get()->set_wait_updates(frames);
-		}
-		if (_anim_body.has_value())
-		{
-			_anim_body.get()->set_wait_updates(frames);
-		}
-		if (_anim_arm_l.has_value())
-		{
-			_anim_arm_l.get()->set_wait_updates(frames);
-		}
-		if (_anim_arm_r.has_value())
-		{
-			_anim_arm_r.get()->set_wait_updates(frames);
-		}
-		if (_anim_tail.has_value())
-		{
-			_anim_tail.get()->set_wait_updates(frames);
-		}
-	}
-
-/*************************************************************************************************************************************/
 
 	bhv_game::bhv_game(int completed_games, const mj::game_data &data) : 
 		_bg(bn::regular_bg_items::bhv_bg.create_bg((256 - 240) / 2, (256 - 160) / 2)),

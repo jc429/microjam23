@@ -10,71 +10,12 @@
 #include "bn_vector.h"
 
 #include "mj/mj_game.h"
+#include "bhv_entity.h"
+#include "bhv_conductor.h"
 
 namespace bhv
 {
 #define __BHV_NOTE_COUNT_MAX__ 6
-
-	class bhv_spr
-	{
-	public:
-		virtual ~bhv_spr() = default;
-		virtual void set_position(bn::fixed_point pos);
-		bn::fixed_point get_position() { return _pos; }
-		virtual void update_anim() = 0;
-		void set_flip(bool flip);
-		virtual void set_wait_updates(int frames) = 0;
-
-	protected:
-		bn::fixed_point _pos;
-		bn::optional<bn::sprite_ptr> _spr;
-	};
-
-	class bhv_puppy : public bhv_spr
-	{
-	public:
-		bhv_puppy();
-		void update_anim() override;
-		void set_wait_updates(int frames) override;
-
-	private:
-		bn::optional<bn::sprite_animate_action<4>> _anim_idle;
-		bn::optional<bn::sprite_animate_action<5>> _anim_sing;
-	};
-
-	class bhv_cat : public bhv_spr
-	{
-	public:
-		bhv_cat(bn::fixed_point pos);
-		void update_anim() override;
-		void set_wait_updates(int frames) override;
-
-	private:
-		bn::optional<bn::sprite_animate_action<6>> _anim_idle;
-		bn::optional<bn::sprite_animate_action<5>> _anim_sing;
-	};
-
-	class bhv_conductor : public bhv_spr
-	{
-	public:
-		bhv_conductor();
-		~bhv_conductor();
-		void set_position(bn::fixed_point pos) override;
-		void update_anim() override;
-		void set_wait_updates(int frames) override;
-
-	private:
-		bn::optional<bn::sprite_ptr> _spr_body;
-		bn::optional<bn::sprite_ptr> _spr_arm_l;
-		bn::optional<bn::sprite_ptr> _spr_arm_r;
-		bn::optional<bn::sprite_ptr> _spr_tail;
-		bn::optional<bn::sprite_animate_action<6>> _anim_head_idle;
-		bn::optional<bn::sprite_animate_action<6>> _anim_head_sing;
-		bn::optional<bn::sprite_animate_action<6>> _anim_body;
-		bn::optional<bn::sprite_animate_action<6>> _anim_arm_l;
-		bn::optional<bn::sprite_animate_action<6>> _anim_arm_r;
-		bn::optional<bn::sprite_animate_action<3>> _anim_tail;
-	};
 
 	class bhv_game : public mj::game
 	{
