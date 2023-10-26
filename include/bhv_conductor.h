@@ -16,14 +16,15 @@ namespace bhv
 		void set_position(bn::fixed_point pos) override;
 		void update_anim() override;
 		void set_wait_updates(int frames) override;
+		void set_anim_idle();
+		void set_anim_lose();
 
 	private:
 		bn::optional<bn::sprite_ptr> _spr_body;
 		bn::optional<bn::sprite_ptr> _spr_arm_l;
 		bn::optional<bn::sprite_ptr> _spr_arm_r;
 		bn::optional<bn::sprite_ptr> _spr_tail;
-		bn::optional<bn::sprite_animate_action<6>> _anim_head_idle;
-		bn::optional<bn::sprite_animate_action<6>> _anim_head_sing;
+		bn::optional<bn::sprite_animate_action<6>> _anim_head;
 		bn::optional<bn::sprite_animate_action<6>> _anim_body;
 		bn::optional<bn::sprite_animate_action<6>> _anim_arm_l;
 		bn::optional<bn::sprite_animate_action<6>> _anim_arm_r;

@@ -49,11 +49,13 @@ namespace bhv
 			builder.set_position(_pos);
 			_spr_tail = builder.release_build();
 		}
-		_anim_head_idle = bn::create_sprite_animate_action_forever(*_spr.get(), 6, bn::sprite_items::bhv_conductor_head.tiles_item(), 0, 1, 2, 3, 4, 5);
+		_anim_head = bn::create_sprite_animate_action_forever(*_spr.get(), 6, bn::sprite_items::bhv_conductor_head.tiles_item(), 0, 1, 2, 3, 4, 5);
 		_anim_body = bn::create_sprite_animate_action_forever(*_spr_body.get(), 6, bn::sprite_items::bhv_conductor_body.tiles_item(), 0, 1, 2, 1, 0, 3);
 		_anim_arm_l = bn::create_sprite_animate_action_forever(*_spr_arm_l.get(), 6, bn::sprite_items::bhv_conductor_arm_l.tiles_item(), 0, 1, 2, 1, 0, 3);
 		_anim_arm_r = bn::create_sprite_animate_action_forever(*_spr_arm_r.get(), 6, bn::sprite_items::bhv_conductor_arm_r.tiles_item(), 0, 1, 2, 1, 0, 3);
 		_anim_tail = bn::create_sprite_animate_action_forever(*_spr_tail.get(), 6, bn::sprite_items::bhv_conductor_tail.tiles_item(), 0, 1, 2);
+
+		set_anim_idle();
 	}
 
 	bhv_conductor::~bhv_conductor()
@@ -87,9 +89,9 @@ namespace bhv
 
 	void bhv_conductor::update_anim()
 	{
-		if (_anim_head_idle.has_value())
+		if (_anim_head.has_value())
 		{
-			_anim_head_idle.get()->update();
+			_anim_head.get()->update();
 		}
 		if (_anim_body.has_value())
 		{
@@ -111,9 +113,9 @@ namespace bhv
 
 	void bhv_conductor::set_wait_updates(int frames)
 	{
-		if (_anim_head_idle.has_value())
+		if (_anim_head.has_value())
 		{
-			_anim_head_idle.get()->set_wait_updates(frames);
+			_anim_head.get()->set_wait_updates(frames);
 		}
 		if (_anim_body.has_value())
 		{
@@ -132,4 +134,23 @@ namespace bhv
 			_anim_tail.get()->set_wait_updates(frames);
 		}
 	}
+
+	void bhv_conductor::set_anim_idle()
+	{
+		_anim_head = bn::create_sprite_animate_action_forever(*_spr.get(), 6, bn::sprite_items::bhv_conductor_head.tiles_item(), 0, 1, 2, 3, 4, 5);
+		_anim_body = bn::create_sprite_animate_action_forever(*_spr_body.get(), 6, bn::sprite_items::bhv_conductor_body.tiles_item(), 0, 1, 2, 1, 0, 3);
+		_anim_arm_l = bn::create_sprite_animate_action_forever(*_spr_arm_l.get(), 6, bn::sprite_items::bhv_conductor_arm_l.tiles_item(), 0, 1, 2, 1, 0, 3);
+		_anim_arm_r = bn::create_sprite_animate_action_forever(*_spr_arm_r.get(), 6, bn::sprite_items::bhv_conductor_arm_r.tiles_item(), 0, 1, 2, 1, 0, 3);
+		_anim_tail = bn::create_sprite_animate_action_forever(*_spr_tail.get(), 6, bn::sprite_items::bhv_conductor_tail.tiles_item(), 0, 1, 2);
+	}
+
+	void bhv_conductor::set_anim_lose()
+	{
+		_anim_head = bn::create_sprite_animate_action_forever(*_spr.get(), 6, bn::sprite_items::bhv_conductor_head.tiles_item(), 10, 11, 12, 11, 10, 12);
+		_anim_body = bn::create_sprite_animate_action_forever(*_spr_body.get(), 6, bn::sprite_items::bhv_conductor_body.tiles_item(), 0, 1, 2, 1, 0, 3);
+		_anim_arm_l = bn::create_sprite_animate_action_forever(*_spr_arm_l.get(), 6, bn::sprite_items::bhv_conductor_arm_l.tiles_item(), 7, 8, 9, 8, 7, 10);
+		_anim_arm_r = bn::create_sprite_animate_action_forever(*_spr_arm_r.get(), 6, bn::sprite_items::bhv_conductor_arm_r.tiles_item(), 0, 1, 2, 1, 0, 3);
+		_anim_tail = bn::create_sprite_animate_action_forever(*_spr_tail.get(), 6, bn::sprite_items::bhv_conductor_tail.tiles_item(), 0, 1, 2);
+	}
+
 }

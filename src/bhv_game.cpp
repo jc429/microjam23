@@ -37,23 +37,23 @@ namespace
 {
 	constexpr bn::string_view code_credits[] = {"squishyfrogs"};
 	constexpr bn::string_view graphics_credits[] = {"moawling"};
-	constexpr bn::fixed_point puppy_pos_3[] = {
-		{-80, 20},
-		{-30, 40},
-		{30, 40}
+	constexpr bn::fixed_point cat_pos_3[] = {
+		{-80, 30},
+		{-40, 20},
+		{70, 30}
 	};
-	constexpr bn::fixed_point puppy_pos_4[] = {
-		{-80, 20},
-		{-35, 32},
-		{20, 40},
-		{80, 20}
+	constexpr bn::fixed_point cat_pos_4[] = {
+		{-80, 30},
+		{-50, 20},
+		{-20, 35},
+		{70, 30}
 	};
-	constexpr bn::fixed_point puppy_pos_5[] = {
-		{-80, 20},
-		{-30, 40},
-		{15, 50},
-		{50, 40},
-		{80, 20}
+	constexpr bn::fixed_point cat_pos_5[] = {
+		{-80, 30},
+		{-50, 20},
+		{-25, 45},
+		{5, 35},
+		{70, 30}
 	};
 	constexpr bn::fixed_point conductor_sprite_pos = {30, -24};
 	constexpr bn::fixed_point prompt_base_pos = {-2,-48};
@@ -84,7 +84,7 @@ namespace bhv
 	bhv_game::bhv_game(int completed_games, const mj::game_data &data) : 
 		_bg(bn::regular_bg_items::bhv_bg.create_bg((256 - 240) / 2, (256 - 160) / 2)),
 		// TODO: Select final bgm CONTENDERS: TOTSNUK10, TOTSNUK01,
-		_total_frames(play_jingle(mj::game_jingle_type::METRONOME_16BEAT, completed_games, data))
+		_total_frames(play_jingle(mj::game_jingle_type::TOTSNUK01, completed_games, data))
 	{
 		constexpr int frames_diff = maximum_frames - minimum_frames;
 		constexpr int maximum_speed_completed_games = 30;
@@ -122,7 +122,7 @@ namespace bhv
 			bn::fixed_point pos = get_pumpkin_pos(i, _note_count);
 			_singing_cats.push_back(bhv_cat(pos));
 			_singing_cats.back().set_wait_updates(tempo);
-			_singing_cats.back().set_flip(i < 3);
+			_singing_cats.back().set_flip(true);
 		}
 
 		init_sprites(data);
@@ -237,6 +237,23 @@ namespace bhv
 		}
 	}
 
+	void bhv_game::win()
+	{
+		set_phase(BHV_PHASE_RESULTS);
+		_bg.set_item(bn::regular_bg_items::tmg_you_win); // TODO: TEMP
+	}
+
+	void bhv_game::lose()
+	{
+		set_phase(BHV_PHASE_RESULTS);
+		_bg.set_item(bn::regular_bg_items::tmg_you_lose); // TODO: TEMP
+		_conductor.set_anim_lose();
+		for(int i = 0; i < _singing_cats.size(); i++)
+		{
+			_singing_cats[i].set_anim_state(BHV_ANIM_LOSE);
+		}
+	}
+
 	mj::game_result bhv_game::play(const mj::game_data &data)
 	{
 		mj::game_result result;
@@ -275,8 +292,7 @@ namespace bhv
 					--_beats_to_victory;
 					if (_beats_to_victory == 0)
 					{
-						set_phase(BHV_PHASE_RESULTS);
-						_bg.set_item(bn::regular_bg_items::tmg_you_win); // TODO: TEMP
+						win();
 					}
 				}
 				if (_beats_to_defeat > 0)
@@ -284,8 +300,7 @@ namespace bhv
 					--_beats_to_defeat;
 					if (_beats_to_defeat == 0)
 					{
-						set_phase(BHV_PHASE_RESULTS);
-						_bg.set_item(bn::regular_bg_items::tmg_you_lose); // TODO: TEMP
+						lose();
 					}
 				}
 
@@ -412,40 +427,6 @@ namespace bhv
 		return -1;
 	}
 
-	bool bhv_game::check_pattern(int btn)
-	{
-		switch (btn)
-		{
-		case button_mapping::A:
-			return bn::keypad::a_pressed();
-			break;
-		case button_mapping::B:
-			return bn::keypad::b_pressed();
-			break;
-		case button_mapping::L:
-			return bn::keypad::l_pressed();
-			break;
-		case button_mapping::R:
-			return bn::keypad::r_pressed();
-			break;
-		case button_mapping::UP:
-			return bn::keypad::up_pressed();
-			break;
-		case button_mapping::DOWN:
-			return bn::keypad::down_pressed();
-			break;
-		case button_mapping::LEFT:
-			return bn::keypad::left_pressed();
-			break;
-		case button_mapping::RIGHT:
-			return bn::keypad::right_pressed();
-			break;
-		default:
-			return false;
-			break;
-		}
-	}
-
 	void bhv_game::reveal_button()
 	{
 		if(_prompt_index >= _btn_sprites.size())
@@ -493,14 +474,10 @@ namespace bhv
 		}
 	}
 
-	void bhv_game::player_press_button()
-	{
-
-	}
-
 	void bhv_game::player_recite_button(int btn)
 	{
 		mark_button(_player_index);
+		_player_pup.set_anim_state(BHV_ANIM_SING);
 		play_tone(btn);
 		bn::fixed_point pos = _player_pup.get_position();
 
@@ -540,6 +517,7 @@ namespace bhv
 		}
 
 		mark_button(_recite_index);
+		_singing_cats[_recite_index].set_anim_state(BHV_ANIM_SING);
 		play_tone(_pattern_items[_recite_index]);
 		bn::fixed_point pos = get_pumpkin_pos(_recite_index, _note_count);
 		bn::sprite_tiles_item sheet_tiles = bn::sprite_items::bhv_button_icons.tiles_item();
@@ -602,13 +580,13 @@ bn::fixed_point get_pumpkin_pos(int pup_idx, int pup_count)
 	switch (pup_count)
 	{
 	case 3:
-		return puppy_pos_3[pup_idx];
+		return cat_pos_3[pup_idx];
 		break;
 	case 4:
-		return puppy_pos_4[pup_idx];
+		return cat_pos_4[pup_idx];
 		break;
 	case 5:
-		return puppy_pos_5[pup_idx];
+		return cat_pos_5[pup_idx];
 		break;
 	default:
 		break;

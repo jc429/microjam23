@@ -14,6 +14,7 @@ namespace bhv
 		bhv_puppy();
 		void update_anim() override;
 		void set_wait_updates(int frames) override;
+		void set_anim_state(anim_state state) override;
 
 	private:
 		bn::optional<bn::sprite_animate_action<4>> _anim_idle;

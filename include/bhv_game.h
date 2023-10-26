@@ -94,16 +94,15 @@ namespace bhv
 		void clear();
 		void start_win();
 		void start_lose();
+		void win();
+		void lose();
 
 		bool any_pressed_not_start_select();
 		int get_pressed_button();
-		bool check_pattern(int btn);
-		
 		void reveal_button();
 		void reveal_all_buttons();
 		void mark_button(int index);
 		void hide_prompt();
-		void player_press_button();
 		void player_recite_button(int btn);
 		void cpu_recite_button();
 		void advance_recite_index();

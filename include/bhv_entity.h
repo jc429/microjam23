@@ -7,6 +7,13 @@
 
 namespace bhv
 {
+	enum anim_state
+	{
+		BHV_ANIM_IDLE,
+		BHV_ANIM_SING,
+		BHV_ANIM_LOSE
+	};
+
 	class bhv_entity
 	{
 	public:
@@ -29,10 +36,15 @@ namespace bhv
 			}
 		}
 		virtual void set_wait_updates(int frames) = 0;
+		virtual void set_anim_state(anim_state state)
+		{
+			_anim_state = state;
+		}
 
 	protected:
 		bn::fixed_point _pos;
 		bn::optional<bn::sprite_ptr> _spr;
+		anim_state _anim_state;
 	};
 }
 

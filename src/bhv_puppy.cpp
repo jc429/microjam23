@@ -20,7 +20,15 @@ namespace bhv
 
 	void bhv_puppy::update_anim()
 	{
-		if (_anim_idle.has_value())
+		if (_anim_state == BHV_ANIM_SING && _anim_sing.has_value())
+		{
+			if (_anim_sing.get()->done())
+			{
+				set_anim_state(BHV_ANIM_IDLE);
+			}
+			_anim_sing.get()->update();
+		}
+		else if (_anim_idle.has_value())
 		{
 			_anim_idle.get()->update();
 		}
@@ -35,6 +43,19 @@ namespace bhv
 		if (_anim_sing.has_value())
 		{
 			_anim_sing.get()->set_wait_updates(frames);
+		}
+	}
+
+	void bhv_puppy::set_anim_state(anim_state state)
+	{
+		_anim_state = state;
+		if (_anim_idle.has_value())
+		{
+			_anim_idle.get()->reset();
+		}
+		if (_anim_sing.has_value())
+		{
+			_anim_sing.get()->reset();
 		}
 	}
 }
