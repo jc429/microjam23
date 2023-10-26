@@ -7,6 +7,7 @@
 #include "bn_fixed_point.h"
 #include "bn_keypad.h"
 #include "bn_math.h"
+#include "bn_music.h"
 #include "bn_random.h"
 #include "bn_sound_items.h"
 #include "bn_sprite_animate_actions.h"
@@ -250,6 +251,7 @@ namespace bhv
 	void bhv_game::lose()
 	{
 		set_phase(BHV_PHASE_RESULTS);
+		bn::music::stop();
 		_conductor.set_anim_lose();
 		for(int i = 0; i < _singing_cats.size(); i++)
 		{
