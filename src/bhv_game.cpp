@@ -548,6 +548,11 @@ namespace bhv
 	{
 		_game_phase = phase;
 		_prompt_index = 0;
+		if(phase == BHV_PHASE_RESULTS)
+		{
+			_cat_sing_box.get()->set_visible(false);
+			_cat_sing_btn.get()->set_visible(false);
+		}
 	}
 
 	void bhv_game::update_animations()
