@@ -11,7 +11,8 @@ namespace bhv
 	{
 		BHV_ANIM_IDLE,
 		BHV_ANIM_SING,
-		BHV_ANIM_LOSE
+		BHV_ANIM_LOSE,
+		BHV_ANIM_WIN,
 	};
 
 	class bhv_entity

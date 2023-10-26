@@ -16,7 +16,10 @@ namespace bhv
 		_spr = builder.release_build();
 		_anim_idle = bn::create_sprite_animate_action_forever(*_spr.get(), 6, bn::sprite_items::bhv_cat.tiles_item(), 0, 1, 2, 3, 4, 5);
 		_anim_sing = bn::create_sprite_animate_action_once(*_spr.get(), 6, bn::sprite_items::bhv_cat.tiles_item(), 7, 8, 9);
+		_anim_win = bn::create_sprite_animate_action_forever(*_spr.get(), 6, bn::sprite_items::bhv_cat.tiles_item(), 7, 8, 9);
 		_anim_lose = bn::create_sprite_animate_action_forever(*_spr.get(), 6, bn::sprite_items::bhv_cat.tiles_item(), 10, 11);
+
+		set_anim_state(BHV_ANIM_IDLE);
 	}
 
 	void bhv_cat::update_anim()
@@ -33,6 +36,10 @@ namespace bhv
 		{
 			_anim_lose.get()->update();
 		}
+		else if (_anim_state == BHV_ANIM_WIN && _anim_win.has_value())
+		{
+			_anim_win.get()->update();
+		}
 		else if (_anim_idle.has_value())
 		{
 			_anim_idle.get()->update();
@@ -48,6 +55,10 @@ namespace bhv
 		if (_anim_sing.has_value())
 		{
 			_anim_sing.get()->set_wait_updates(frames);
+		}
+		if (_anim_win.has_value())
+		{
+			_anim_win.get()->set_wait_updates(frames);
 		}
 		if (_anim_lose.has_value())
 		{

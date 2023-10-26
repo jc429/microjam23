@@ -22,6 +22,7 @@ namespace bhv
 		bn::optional<bn::sprite_animate_action<6>> _anim_idle;
 		bn::optional<bn::sprite_animate_action<3>> _anim_sing;
 		bn::optional<bn::sprite_animate_action<2>> _anim_lose;
+		bn::optional<bn::sprite_animate_action<3>> _anim_win;
 	};
 }
 

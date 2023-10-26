@@ -18,7 +18,8 @@ namespace bhv
 
 	private:
 		bn::optional<bn::sprite_animate_action<4>> _anim_idle;
-		bn::optional<bn::sprite_animate_action<5>> _anim_sing;
+		bn::optional<bn::sprite_animate_action<3>> _anim_sing;
+		bn::optional<bn::sprite_animate_action<3>> _anim_win;
 	};
 }
 

@@ -40,20 +40,20 @@ namespace
 	constexpr bn::fixed_point cat_pos_3[] = {
 		{-80, 30},
 		{-40, 20},
-		{70, 30}
+		{70, 35}
 	};
 	constexpr bn::fixed_point cat_pos_4[] = {
 		{-80, 30},
 		{-50, 20},
 		{-20, 35},
-		{70, 30}
+		{70, 35}
 	};
 	constexpr bn::fixed_point cat_pos_5[] = {
 		{-80, 30},
 		{-50, 20},
 		{-25, 45},
 		{5, 35},
-		{70, 30}
+		{70, 35}
 	};
 	constexpr bn::fixed_point conductor_sprite_pos = {30, -24};
 	constexpr bn::fixed_point prompt_base_pos = {-2,-48};
@@ -240,13 +240,16 @@ namespace bhv
 	void bhv_game::win()
 	{
 		set_phase(BHV_PHASE_RESULTS);
-		_bg.set_item(bn::regular_bg_items::tmg_you_win); // TODO: TEMP
+		for (int i = 0; i < _singing_cats.size(); i++)
+		{
+			_singing_cats[i].set_anim_state(BHV_ANIM_WIN);
+		}
+		_player_pup.set_anim_state(BHV_ANIM_WIN);
 	}
 
 	void bhv_game::lose()
 	{
 		set_phase(BHV_PHASE_RESULTS);
-		_bg.set_item(bn::regular_bg_items::tmg_you_lose); // TODO: TEMP
 		_conductor.set_anim_lose();
 		for(int i = 0; i < _singing_cats.size(); i++)
 		{
