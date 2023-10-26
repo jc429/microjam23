@@ -2,7 +2,6 @@
 
 #include "bhv_conductor.h"
 
-#include "bn_sprite_items_bhv_conductor_hands.h"
 #include "bn_sprite_items_bhv_conductor_head.h"
 #include "bn_sprite_items_bhv_conductor_body.h"
 #include "bn_sprite_items_bhv_conductor_arm_l.h"
